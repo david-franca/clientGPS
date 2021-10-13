@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Button,
   ButtonProps,
@@ -6,7 +7,9 @@ import {
   Combobox,
   ExportIcon,
   FilterIcon,
+  Icon,
   IconButton,
+  KeyIcon,
   MapIcon,
   Pane,
   PaneProps,
@@ -19,18 +22,28 @@ import {
   TickIcon,
 } from 'evergreen-ui'
 import { NextPage } from 'next'
-import Lottie from 'react-lottie'
+import dynamic from 'next/dynamic'
+import { useState } from 'react'
 
-import { MenuComponent } from '../../components/Menu'
-import { customers, vehicles } from '../../db'
+import { Head, Loading, MenuComponent } from '../../components'
+import { useAxios } from '../../hooks/useAxios'
+import { Customer } from '../../models/customer.model'
+import { Vehicle } from '../../models/vehicles.model'
 import { capitalizeWords } from '../../utils'
-import worldMap from '../../animations/world-map.json'
 
-const centralOption: PaneProps = {
-  alignItems: 'center',
-  display: 'flex',
-  justifyContent: 'center',
+enum Refresh {
+  DONT = 'Não atualizar',
+  S30 = '30 segundos',
+  M1 = '1 Minuto',
+  M2 = '2 minutos',
+  M3 = '3 minutos',
+  M5 = '5 Minutos',
+  M10 = '10 Minutos',
 }
+
+const MapWithNoSSR = dynamic(() => import('../../components/map/Map'), {
+  ssr: false,
+})
 
 const buttonOptions: ButtonProps = {
   height: '3vh',
@@ -57,16 +70,43 @@ const popoverOptions = {
 }
 
 const Platform: NextPage = () => {
+  const [customerId, setCustomerId] = useState('')
+  const [refreshTime, setRefreshTime] = useState<Refresh>(Refresh.DONT)
+  const [center, setCenter] = useState<[number, number]>([0, 0])
+
+  const toggleActive = (customer: Customer) => {
+    if (customer.id === customerId) {
+      setCustomerId('')
+      setCenter([8, 8])
+    } else {
+      setCustomerId(customer.id)
+      setCenter([2, 5])
+    }
+  }
+
+  const { data: customers } = useAxios<Customer[]>('customers', {})
+  const { data: vehicles } = useAxios<Vehicle[]>(
+    `vehicles?where={"customerId":"${customerId}"}`,
+    {}
+  )
+
+  if (!customers) {
+    return <Loading />
+  }
+
   return (
     <Pane>
+      <Head title="Plataforma" />
       <Pane
         about="menu"
         width={'100vw'}
         flex={1}
         border={true}
         backgroundColor="Menu"
+        position="relative"
       >
         <Popover
+          display="inline-block"
           content={
             <MenuComponent
               itens={[
@@ -130,7 +170,8 @@ const Platform: NextPage = () => {
                 <Table.Row
                   key={customer.id}
                   isSelectable
-                  onSelect={() => alert(customer.cpfOrCnpj)}
+                  background={customerId === customer.id ? 'green300' : ''}
+                  onSelect={() => toggleActive(customer)}
                 >
                   <Table.TextCell
                     borderRight={true}
@@ -148,10 +189,8 @@ const Platform: NextPage = () => {
             </Table.VirtualBody>
           </Table>
         </Pane>
-        <Pane about="map" width="80vw" height="70vh" {...centralOption}>
-          <Lottie
-            options={{ loop: true, autoplay: true, animationData: worldMap }}
-          />
+        <Pane className="leaflet-container" about="map" zIndex={1}>
+          <MapWithNoSSR vehicles={customerId && vehicles ? vehicles : []} />
         </Pane>
       </Pane>
       <Pane width="100vw" border={true}>
@@ -181,25 +220,31 @@ const Platform: NextPage = () => {
           </Pane>
           <Pane {...paneRowFilters} width="7%">
             <IconButton width="33%" height="3vh" icon={TickIcon} />
-            <IconButton width="33%" height="3vh" icon={CleanIcon} />
+            <IconButton
+              width="33%"
+              height="3vh"
+              icon={CleanIcon}
+              onClick={() => setCustomerId('')}
+            />
             <IconButton width="33%" height="3vh" icon={FilterIcon} />
           </Pane>
           <Pane {...paneRowFilters} width="15%">
             <Text paddingRight={6}>Atualização:</Text>
             <Combobox
-              initialSelectedItem={{ label: 'Não atualizar' }}
+              initialSelectedItem={{ label: Refresh.DONT }}
               items={[
-                { label: 'Não atualizar' },
-                { label: '30 segundos' },
-                { label: '1 minuto' },
-                { label: '2 minutos' },
-                { label: '3 minutos' },
-                { label: '5 minutos' },
-                { label: '10 minutos' },
+                { label: Refresh.DONT },
+                { label: Refresh.S30 },
+                { label: Refresh.M1 },
+                { label: Refresh.M2 },
+                { label: Refresh.M3 },
+                { label: Refresh.M5 },
+                { label: Refresh.M10 },
               ]}
-              itemToString={(item) => (item ? item.label : '')}
+              itemToString={item => (item ? item.label : '')}
               width="100%"
               height="3vh"
+              onChange={selected => setRefreshTime(selected.label)}
             />
           </Pane>
           <Pane {...paneRowFilters} width="7%">
@@ -220,7 +265,7 @@ const Platform: NextPage = () => {
                 { label: '1000' },
                 { label: '5000' },
               ]}
-              itemToString={(item) => (item ? item.label : '')}
+              itemToString={item => (item ? item.label : '')}
               width="100%"
               height="3vh"
             />
@@ -232,23 +277,49 @@ const Platform: NextPage = () => {
         <Table>
           <Table.Head height="3vh">
             <Table.TextHeaderCell>Placa</Table.TextHeaderCell>
-            <Table.TextHeaderCell>Frota</Table.TextHeaderCell>
             <Table.TextHeaderCell>Motorista</Table.TextHeaderCell>
             <Table.TextHeaderCell>Última Atualização</Table.TextHeaderCell>
             <Table.TextHeaderCell>Velocidade</Table.TextHeaderCell>
             <Table.TextHeaderCell>Status</Table.TextHeaderCell>
           </Table.Head>
           <Table.VirtualBody height="20vh">
-            {vehicles.map((vehicle) => (
-              <Table.Row key={vehicle.id} isSelectable>
-                <Table.TextCell>{vehicle.licensePlate}</Table.TextCell>
-                <Table.TextCell></Table.TextCell>
-                <Table.TextCell></Table.TextCell>
-                <Table.TextCell>{vehicle.updateAt}</Table.TextCell>
-                <Table.TextCell></Table.TextCell>
-                <Table.TextCell></Table.TextCell>
-              </Table.Row>
-            ))}
+            {customerId && vehicles
+              ? vehicles.map(vehicle => (
+                  <Table.Row key={vehicle.id} isSelectable>
+                    <Table.TextCell>{vehicle.licensePlate}</Table.TextCell>
+                    <Table.TextCell>{}</Table.TextCell>
+                    <Table.TextCell>
+                      {vehicle.device?.location[0]?.fixTime
+                        ? new Date(
+                            vehicle.device?.location[0]?.fixTime
+                          ).toLocaleDateString('pt-br', {
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            second: 'numeric',
+                            timeZoneName: 'short',
+                          })
+                        : ''}
+                    </Table.TextCell>
+                    <Table.TextCell>
+                      {vehicle.device?.location[0]?.speed}
+                    </Table.TextCell>
+                    <Table.TextCell>
+                      {vehicle.device?.status[0]?.ignition ? (
+                        <Icon
+                          icon={KeyIcon}
+                          color={
+                            vehicle.device?.status[0]?.ignition
+                              ? 'green'
+                              : 'gray'
+                          }
+                        />
+                      ) : (
+                        ''
+                      )}
+                    </Table.TextCell>
+                  </Table.Row>
+                ))
+              : ''}
           </Table.VirtualBody>
         </Table>
       </Pane>

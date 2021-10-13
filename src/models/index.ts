@@ -1,0 +1,7 @@
+export * from './alert.model'
+export * from './branch.model'
+export * from './customer.model'
+export * from './device.model'
+export * from './location.model'
+export * from './status.model'
+export * from './vehicles.model'

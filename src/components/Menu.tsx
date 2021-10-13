@@ -1,7 +1,7 @@
 import { Menu } from 'evergreen-ui'
 
 interface MenuItemProps {
-  icon?: any
+  icon?: false | JSX.Element | React.ElementType<unknown> | null | undefined
   itens: string[]
 }
 
