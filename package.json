@@ -25,7 +25,8 @@
     "react-leaflet": "^3.2.1",
     "react-lottie": "^1.2.3",
     "swr": "^1.0.1",
-    "yup": "^0.32.11"
+    "yup": "^0.32.11",
+    "yup-locale-pt": "^0.0.8"
   },
   "devDependencies": {
     "@types/leaflet": "^1.7.5",

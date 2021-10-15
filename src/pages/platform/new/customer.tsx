@@ -15,8 +15,11 @@ import { useRouter } from 'next/router'
 import { ChangeEvent, useEffect, useState } from 'react'
 import Mask from 'react-input-mask'
 import * as Yup from 'yup'
+import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
+
+Yup.setLocale(ptForm)
 
 const initialValues = {
   fullName: '',
@@ -82,26 +85,24 @@ interface CidadesIGBE {
   }
 }
 
-export const Customer = (): JSX.Element => {
+const Customer = (): JSX.Element => {
   const router = useRouter()
   const formSchema = Yup.object().shape({
-    fullName: Yup.string()
-      .required('Obrigatório')
-      .min(2, 'O nome deve ter pelo menos 2 caracteres'),
+    fullName: Yup.string().required().min(2),
     cpfOrCnpj: Yup.string()
-      .required('Obrigatório')
+      .required()
       .test('IsCpfOrCnpj', 'CPF ou CNPJ invalido', value =>
         validateBr.cpfcnpj(value ?? '')
       ),
-    cellPhone: Yup.string().required('Obrigatório'),
+    cellPhone: Yup.string().required(),
     cep: Yup.string()
-      .required('Obrigatório')
+      .required()
       .test('IsCEP', 'CEP invalido', value => validateBr.cep(value ?? '')),
-    street: Yup.string().required('Obrigatório'),
-    number: Yup.string().required('Obrigatório'),
-    district: Yup.string().required('Obrigatório'),
-    state: Yup.string().required('Obrigatório'),
-    city: Yup.string().required('Obrigatório'),
+    street: Yup.string().required(),
+    number: Yup.string().required(),
+    district: Yup.string().required(),
+    state: Yup.string().required(),
+    city: Yup.string().required(),
     complement: Yup.string().optional(),
   })
 
@@ -110,7 +111,6 @@ export const Customer = (): JSX.Element => {
     initialValues,
     onSubmit: values => {
       values.cellPhone = values.cellPhone.replace(/[^0-9]/g, '')
-      console.log(values)
       axios
         .post('http://18.221.76.17/customers', values)
         .then(() => {
@@ -160,8 +160,7 @@ export const Customer = (): JSX.Element => {
               typeOfAddress: 'Residencial',
             })
           })
-          .catch((e: AxiosError) => {
-            console.log(e.response?.data)
+          .catch(() => {
             toaster.warning('CEP não encontrado')
           })
       }
@@ -173,7 +172,6 @@ export const Customer = (): JSX.Element => {
 
   useEffect(() => {
     if (formik.values.state) {
-      console.log(formik.values.state)
       axios
         .get(
           `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${formik.values.state}/municipios`
@@ -182,7 +180,6 @@ export const Customer = (): JSX.Element => {
           setCities(data)
         })
         .catch((e: AxiosError) => {
-          console.log(e.message)
           toaster.warning(e.message)
         })
     }
@@ -359,6 +356,8 @@ export const Customer = (): JSX.Element => {
               width="40%"
               value={formik.values.state}
               onChange={formik.handleChange}
+              validationMessage={formik.touched.state && formik.errors.state}
+              isInvalid={formik.touched.state && Boolean(formik.errors.state)}
             >
               <option value="">Selecione</option>
               <option value="AC">Acre</option>
@@ -427,6 +426,7 @@ export const Customer = (): JSX.Element => {
               intent="danger"
               size="medium"
               width="30%"
+              type="button"
               onClick={() => router.push('/platform')}
             >
               Cancelar
