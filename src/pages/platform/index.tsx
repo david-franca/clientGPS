@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
-  Button,
-  ButtonProps,
   Checkbox,
   CleanIcon,
   Combobox,
@@ -13,7 +11,6 @@ import {
   MapIcon,
   Pane,
   PaneProps,
-  Popover,
   Position,
   RefreshIcon,
   SearchInput,
@@ -25,7 +22,8 @@ import { NextPage } from 'next'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 
-import { Head, Loading, MenuComponent } from '../../components'
+import { Head, Loading, Menu } from '../../components'
+import { configMenu } from '../../config/menu.config'
 import { useAxios } from '../../hooks/useAxios'
 import { Customer } from '../../models/customer.model'
 import { Vehicle } from '../../models/vehicles.model'
@@ -45,17 +43,6 @@ const MapWithNoSSR = dynamic(() => import('../../components/map/Map'), {
   ssr: false,
 })
 
-const buttonOptions: ButtonProps = {
-  height: '3vh',
-  border: 'Menu',
-  borderRadius: 0,
-  paddingX: '0.7em',
-  size: 'small',
-  fontSize: '0.8em',
-  background: 'Menu',
-  color: 'MenuText',
-}
-
 const paneRowFilters: PaneProps = {
   display: 'flex',
   flexDirection: 'row',
@@ -64,23 +51,15 @@ const paneRowFilters: PaneProps = {
   justifyContent: 'center',
 }
 
-const popoverOptions = {
-  minWidth: 5,
-  position: Position.BOTTOM_LEFT,
-}
-
 const Platform: NextPage = () => {
   const [customerId, setCustomerId] = useState('')
   const [refreshTime, setRefreshTime] = useState<Refresh>(Refresh.DONT)
-  const [center, setCenter] = useState<[number, number]>([0, 0])
 
   const toggleActive = (customer: Customer) => {
     if (customer.id === customerId) {
       setCustomerId('')
-      setCenter([8, 8])
     } else {
       setCustomerId(customer.id)
-      setCenter([2, 5])
     }
   }
 
@@ -97,64 +76,7 @@ const Platform: NextPage = () => {
   return (
     <Pane>
       <Head title="Plataforma" />
-      <Pane
-        about="menu"
-        width={'100vw'}
-        flex={1}
-        border={true}
-        backgroundColor="Menu"
-        position="relative"
-      >
-        <Popover
-          display="inline-block"
-          content={
-            <MenuComponent
-              itens={[
-                'Cliente',
-                'Equipamento',
-                'Motorista',
-                'Veiculo',
-                'Filial',
-              ]}
-            />
-          }
-          {...popoverOptions}
-        >
-          <Button {...buttonOptions}>Cadastros</Button>
-        </Popover>
-        <Popover
-          content={
-            <MenuComponent
-              itens={[
-                'Alertas',
-                'Entradas',
-                'Hodômetro',
-                'Relação de Veículos',
-                'Relação de Filiais',
-              ]}
-            />
-          }
-          {...popoverOptions}
-        >
-          <Button {...buttonOptions}>Relatórios</Button>
-        </Popover>
-        <Popover
-          content={
-            <MenuComponent
-              itens={[
-                'Cliente',
-                'Equipamento',
-                'Motorista',
-                'Veiculo',
-                'Filial',
-              ]}
-            />
-          }
-          {...popoverOptions}
-        >
-          <Button {...buttonOptions}>Configurações</Button>
-        </Popover>
-      </Pane>
+      <Menu config={configMenu} />
       <Pane display="flex">
         <Pane about="customers" width="20vw" height="70vh">
           <Table borderRadius="none">
