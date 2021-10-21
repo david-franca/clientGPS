@@ -18,11 +18,12 @@ import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
-import api from '../../../utils/api.utils'
+import { BrasilApi, CidadesIGBE, CustomerForm } from '../../../models'
+import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
-const initialValues = {
+const initialValues: CustomerForm = {
   fullName: '',
   cpfOrCnpj: '',
   cellPhone: '',
@@ -32,58 +33,7 @@ const initialValues = {
   district: '',
   state: '',
   city: '',
-  complement: '',
   typeOfAddress: 'Residencial',
-}
-
-interface BrasilApi {
-  cep: string
-  state: string
-  city: string
-  neighborhood: string
-  street: string
-  service: string
-}
-
-interface CidadesIGBE {
-  id: number
-  nome: string
-  microrregiao: {
-    id: number
-    nome: string
-    mesorregiao: {
-      id: number
-      nome: string
-      UF: {
-        id: number
-        nome: string
-        sigla: string
-        regiao: {
-          id: number
-          nome: string
-          sigla: string
-        }
-      }
-    }
-  }
-  'regiao-imediata': {
-    id: number
-    nome: string
-    'regiao-intermediara': {
-      id: number
-      nome: string
-      UF: {
-        id: number
-        nome: string
-        sigla: string
-        regiao: {
-          id: number
-          nome: string
-          sigla: string
-        }
-      }
-    }
-  }
 }
 
 const Customer = (): JSX.Element => {
@@ -104,7 +54,7 @@ const Customer = (): JSX.Element => {
     district: Yup.string().required(),
     state: Yup.string().required(),
     city: Yup.string().required(),
-    complement: Yup.string().optional(),
+    complement: Yup.string().nullable(),
   })
 
   const formik = useFormik({
@@ -112,6 +62,9 @@ const Customer = (): JSX.Element => {
     initialValues,
     onSubmit: values => {
       values.cellPhone = values.cellPhone.replace(/[^0-9]/g, '')
+      if (!values.complement) {
+        delete values.complement
+      }
       api
         .post('customers', values)
         .then(() => {
@@ -196,13 +149,11 @@ const Customer = (): JSX.Element => {
       background="blue700"
     >
       <Pane
-        overflowY="auto"
         overflowX="auto"
         border={true}
         width={600}
         background="gray200"
         display="flex"
-        justifyContent="center"
         alignItems="center"
         flexDirection="column"
         borderRadius={20}

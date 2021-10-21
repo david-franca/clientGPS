@@ -20,3 +20,19 @@ export type Vehicle = {
   observation: string
   device?: Device
 }
+
+export type VehicleForm = {
+  licensePlate: string
+  type: string
+  deviceId: string
+  customerId: string
+  branchId: string
+  brand: string
+  model: string
+  color: string
+  year: number
+  chassi: string
+  renavam: string
+  observation?: string
+  device?: Device
+}
