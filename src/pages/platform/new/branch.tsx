@@ -16,12 +16,12 @@ import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
-import { Customer } from '../../../models'
-import api from '../../../utils/api.utils'
+import { BranchForm, Customer } from '../../../models'
+import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
-const initialValues = {
+const initialValues: BranchForm = {
   name: '',
   customerId: '',
 }
@@ -89,13 +89,11 @@ const Branch = (): JSX.Element => {
       background="blue700"
     >
       <Pane
-        overflowY="auto"
         overflowX="auto"
         border={true}
         width={600}
         background="gray200"
         display="flex"
-        justifyContent="center"
         alignItems="center"
         flexDirection="column"
         borderRadius={20}

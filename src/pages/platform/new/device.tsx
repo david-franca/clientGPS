@@ -16,7 +16,7 @@ import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
 import { timezone } from '../../../models/timezone.model'
-import api from '../../../utils/api.utils'
+import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
@@ -85,13 +85,11 @@ const Device = (): JSX.Element => {
       background="blue700"
     >
       <Pane
-        overflowY="auto"
         overflowX="auto"
         border={true}
         width={600}
         background="gray200"
         display="flex"
-        justifyContent="center"
         alignItems="center"
         flexDirection="column"
         borderRadius={20}

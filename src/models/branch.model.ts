@@ -7,3 +7,8 @@ export type Branch = {
   customerId: string
   name: string
 }
+
+export type BranchForm = {
+  customerId: string
+  name: string
+}

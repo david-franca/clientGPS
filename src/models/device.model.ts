@@ -62,4 +62,17 @@ export interface Device {
   location: Location[]
   alert: Alert[]
   status: Status[]
+  note: string | null
+}
+
+export interface DeviceForm {
+  code: number
+  description: string
+  model: Model
+  equipmentNumber: string
+  phone: string
+  mobileOperator: MobileOperator
+  chipNumber: string
+  timezone: Timezone
+  note?: string
 }

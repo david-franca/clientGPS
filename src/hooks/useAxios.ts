@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { AxiosError, AxiosRequestConfig } from 'axios'
 import useSWR from 'swr'
-import api from '../utils/api.utils'
+import { api } from '../utils'
 
 export function useAxios<Data = unknown, Error = AxiosError>(
   url: string,

@@ -17,18 +17,18 @@ import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
 import { Branch, Customer, Device as Devices } from '../../../models'
-import api from '../../../utils/api.utils'
+import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
 const initialValues = {
-  licensePlate: 'RQM-9079',
-  type: 'Caminhao',
-  brand: 'CHERY',
-  color: 'CINZA',
-  model: 'CIELO 1.6 16V 119cv 5p',
+  licensePlate: '',
+  type: '',
+  brand: '',
+  color: '',
+  model: '',
   observation: '',
-  year: 2020,
+  year: undefined,
   customerId: '',
   deviceId: '',
   branchId: '',
@@ -152,13 +152,11 @@ const Device = (): JSX.Element => {
       background="blue700"
     >
       <Pane
-        overflowY="auto"
         overflowX="auto"
         border={true}
         width={600}
         background="gray200"
         display="flex"
-        justifyContent="center"
         alignItems="center"
         flexDirection="column"
         borderRadius={20}
