@@ -18,6 +18,7 @@ import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
+import api from '../../../utils/api.utils'
 
 Yup.setLocale(ptForm)
 
@@ -111,8 +112,8 @@ const Customer = (): JSX.Element => {
     initialValues,
     onSubmit: values => {
       values.cellPhone = values.cellPhone.replace(/[^0-9]/g, '')
-      axios
-        .post('http://18.221.76.17/customers', values)
+      api
+        .post('customers', values)
         .then(() => {
           formik.setSubmitting(false)
           toaster.success('Cliente cadastrado')
