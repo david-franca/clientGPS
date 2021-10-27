@@ -1,6 +1,5 @@
 import { AxiosError, AxiosResponse } from 'axios'
 import {
-  Button,
   Heading,
   Pane,
   SelectField,
@@ -10,12 +9,12 @@ import {
   toaster,
 } from 'evergreen-ui'
 import { useFormik } from 'formik'
-import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
+import { ButtonsForm } from '../../../components/ButtonsForm'
 import { BranchForm, Customer } from '../../../models'
 import { api } from '../../../utils'
 
@@ -28,7 +27,6 @@ const initialValues: BranchForm = {
 
 const Branch = (): JSX.Element => {
   const [customers, setCustomers] = useState<Customer[]>([])
-  const router = useRouter()
   const formSchema = Yup.object().shape({
     customerId: Yup.string().required().uuid(),
     name: Yup.string().required().min(1),
@@ -150,28 +148,11 @@ const Branch = (): JSX.Element => {
             />
           </Pane>
           <TextareaField label="Observações" />
-          <Pane display="flex" justifyContent="space-around" paddingBottom={20}>
-            <Button
-              appearance="primary"
-              intent="success"
-              size="medium"
-              width="30%"
-              type="submit"
-              disabled={formik.isSubmitting}
-            >
-              Salvar
-            </Button>
-            <Button
-              appearance="primary"
-              intent="danger"
-              size="medium"
-              width="30%"
-              type="button"
-              onClick={() => router.push('/platform')}
-            >
-              Cancelar
-            </Button>
-          </Pane>
+          <ButtonsForm
+            disabled={formik.isSubmitting}
+            newCLick={() => formik.resetForm()}
+            redirect="/platform"
+          />
           {formik.isSubmitting && (
             <Pane display="flex" alignItems="center" justifyContent="center">
               <Spinner marginY={10} />

@@ -1,6 +1,5 @@
 import { AxiosError, AxiosResponse } from 'axios'
 import {
-  Button,
   Heading,
   Pane,
   SelectField,
@@ -10,12 +9,14 @@ import {
   toaster,
 } from 'evergreen-ui'
 import { useFormik } from 'formik'
-import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import Mask from 'react-input-mask'
 import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
+import { ButtonsForm } from '../../../components/ButtonsForm'
+import { vehiclesColor, vehiclesType } from '../../../config'
 import { Branch, Customer, Device as Devices } from '../../../models'
 import { api } from '../../../utils'
 
@@ -38,7 +39,6 @@ const Device = (): JSX.Element => {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [devices, setDevices] = useState<Devices[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
-  const router = useRouter()
   const formSchema = Yup.object().shape({
     licensePlate: Yup.string().required(),
     type: Yup.string().required(),
@@ -78,6 +78,11 @@ const Device = (): JSX.Element => {
         })
     },
   })
+
+  const handlePlate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.target.value = String(e.target.value).toUpperCase()
+    formik.handleChange(e)
+  }
 
   useEffect(() => {
     api
@@ -177,22 +182,29 @@ const Device = (): JSX.Element => {
             flexDirection="row"
             justifyContent="space-between"
           >
-            <TextInputField
-              id="licensePlate"
-              required
-              isInvalid={
-                formik.touched.licensePlate &&
-                Boolean(formik.errors.licensePlate)
-              }
-              label="Placa"
-              type="text"
-              width="20%"
+            <Mask
+              mask="aaa-9**9"
+              maskChar=""
               value={formik.values.licensePlate}
-              onChange={formik.handleChange}
-              validationMessage={
-                formik.touched.licensePlate && formik.errors.licensePlate
-              }
-            />
+              onChange={e => handlePlate(e)}
+            >
+              {() => (
+                <TextInputField
+                  id="licensePlate"
+                  required
+                  isInvalid={
+                    formik.touched.licensePlate &&
+                    Boolean(formik.errors.licensePlate)
+                  }
+                  label="Placa"
+                  type="text"
+                  width="20%"
+                  validationMessage={
+                    formik.touched.licensePlate && formik.errors.licensePlate
+                  }
+                />
+              )}
+            </Mask>
             <SelectField
               id="type"
               isInvalid={formik.touched.type && Boolean(formik.errors.type)}
@@ -203,27 +215,11 @@ const Device = (): JSX.Element => {
               validationMessage={formik.touched.type && formik.errors.type}
               width="40%"
             >
-              <option value="">Selecione</option>
-              <option value="Ambulancia">Ambulância</option>
-              <option value="Barco">Barco</option>
-              <option value="Bitrem">Bitrem</option>
-              <option value="Carro">Carro</option>
-              <option value="Caminhao">Caminhão</option>
-              <option value="Caminhonete">Caminhonete</option>
-              <option value="Caminhao_Betoneira">Caminhão Betoneira</option>
-              <option value="Caminhao_Pipa">Caminhão Pipa</option>
-              <option value="Colheitadeira">Colheitadeira</option>
-              <option value="Escavadeira">Escavadeira</option>
-              <option value="Moto">Moto</option>
-              <option value="Motobomba">Motobomba</option>
-              <option value="Motoniveladora">Motoniveladora</option>
-              <option value="Onibus">Ônibus</option>
-              <option value="Pa_Carregadora">Pá Carregadora</option>
-              <option value="Pessoa">Pessoa</option>
-              <option value="Semaforo">Semáforo</option>
-              <option value="Trator">Trator</option>
-              <option value="Trator_de_Esteira">Trator de Esteira</option>
-              <option value="Outras">Outros</option>
+              {vehiclesType.map((option, index) => (
+                <option value={option.value} key={index}>
+                  {option.title}
+                </option>
+              ))}
             </SelectField>
           </Pane>
           <Pane
@@ -257,23 +253,11 @@ const Device = (): JSX.Element => {
               validationMessage={formik.touched.color && formik.errors.color}
               width="40%"
             >
-              <option value="">Selecione</option>
-              <option value="AMARELO">AMARELO</option>
-              <option value="AZUL">AZUL</option>
-              <option value="BEGE">BEGE</option>
-              <option value="BRANCA">BRANCA</option>
-              <option value="CINZA">CINZA</option>
-              <option value="DOURADA">DOURADA</option>
-              <option value="GRENA">GRENA</option>
-              <option value="LARANJA">LARANJA</option>
-              <option value="MARROM">MARROM</option>
-              <option value="PRATA">PRATA</option>
-              <option value="PRETA">PRETA</option>
-              <option value="ROSA">ROSA</option>
-              <option value="ROXA">ROXA</option>
-              <option value="VERDE">VERDE</option>
-              <option value="VERMELHA">VERMELHA</option>
-              <option value="FANTASIA">FANTASIA</option>
+              {vehiclesColor.map((color, index) => (
+                <option key={index} value={color.value}>
+                  {color.title}
+                </option>
+              ))}
             </SelectField>
             <TextInputField
               id="model"
@@ -357,28 +341,11 @@ const Device = (): JSX.Element => {
             ))}
           </SelectField>
           <TextareaField label="Observações" />
-          <Pane display="flex" justifyContent="space-around" paddingBottom={20}>
-            <Button
-              appearance="primary"
-              intent="success"
-              size="medium"
-              width="30%"
-              type="submit"
-              disabled={formik.isSubmitting}
-            >
-              Salvar
-            </Button>
-            <Button
-              appearance="primary"
-              intent="danger"
-              size="medium"
-              width="30%"
-              type="button"
-              onClick={() => router.push('/platform')}
-            >
-              Cancelar
-            </Button>
-          </Pane>
+          <ButtonsForm
+            disabled={formik.isSubmitting}
+            newCLick={() => formik.resetForm()}
+            redirect="/platform"
+          />
           {formik.isSubmitting && (
             <Pane display="flex" alignItems="center" justifyContent="center">
               <Spinner marginY={10} />

@@ -1,6 +1,5 @@
 import { AxiosError } from 'axios'
 import {
-  Button,
   Heading,
   Pane,
   SelectField,
@@ -10,11 +9,11 @@ import {
   toaster,
 } from 'evergreen-ui'
 import { useFormik } from 'formik'
-import { useRouter } from 'next/router'
 import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
+import { ButtonsForm } from '../../../components/ButtonsForm'
 import { timezone } from '../../../models/timezone.model'
 import { api } from '../../../utils'
 
@@ -32,7 +31,6 @@ const initialValues = {
 }
 
 const Device = (): JSX.Element => {
-  const router = useRouter()
   const formSchema = Yup.object().shape({
     code: Yup.number()
       .required()
@@ -253,28 +251,11 @@ const Device = (): JSX.Element => {
             />
           </Pane>
           <TextareaField label="Observações" />
-          <Pane display="flex" justifyContent="space-around" paddingBottom={20}>
-            <Button
-              appearance="primary"
-              intent="success"
-              size="medium"
-              width="30%"
-              type="submit"
-              disabled={formik.isSubmitting}
-            >
-              Salvar
-            </Button>
-            <Button
-              appearance="primary"
-              intent="danger"
-              size="medium"
-              width="30%"
-              type="button"
-              onClick={() => router.push('/platform')}
-            >
-              Cancelar
-            </Button>
-          </Pane>
+          <ButtonsForm
+            disabled={formik.isSubmitting}
+            newCLick={() => formik.resetForm()}
+            redirect="/platform"
+          />
           {formik.isSubmitting && (
             <Pane display="flex" alignItems="center" justifyContent="center">
               <Spinner marginY={10} />
