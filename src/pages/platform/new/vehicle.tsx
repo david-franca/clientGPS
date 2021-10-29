@@ -17,7 +17,7 @@ import { ptForm } from 'yup-locale-pt'
 import { Head } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
 import { vehiclesColor, vehiclesType } from '../../../config'
-import { Branch, Customer, Device as Devices } from '../../../models'
+import { Branch, CustomerData, Device as Devices } from '../../../models'
 import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
@@ -36,7 +36,7 @@ const initialValues = {
 }
 
 const Device = (): JSX.Element => {
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customers, setCustomers] = useState<CustomerData[]>([])
   const [devices, setDevices] = useState<Devices[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const formSchema = Yup.object().shape({
@@ -87,7 +87,7 @@ const Device = (): JSX.Element => {
   useEffect(() => {
     api
       .get('customers')
-      .then(({ data }: AxiosResponse<Customer[]>) => {
+      .then(({ data }: AxiosResponse<CustomerData[]>) => {
         setCustomers(data)
       })
       .catch((e: AxiosError) => {

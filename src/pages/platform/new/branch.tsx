@@ -15,7 +15,7 @@ import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
-import { BranchForm, Customer } from '../../../models'
+import { BranchForm, CustomerData } from '../../../models'
 import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
@@ -26,7 +26,7 @@ const initialValues: BranchForm = {
 }
 
 const Branch = (): JSX.Element => {
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customers, setCustomers] = useState<CustomerData[]>([])
   const formSchema = Yup.object().shape({
     customerId: Yup.string().required().uuid(),
     name: Yup.string().required().min(1),
@@ -61,7 +61,7 @@ const Branch = (): JSX.Element => {
   useEffect(() => {
     api
       .get('customers')
-      .then(({ data }: AxiosResponse<Customer[]>) => {
+      .then(({ data }: AxiosResponse<CustomerData[]>) => {
         setCustomers(data)
       })
       .catch((e: AxiosError) => {

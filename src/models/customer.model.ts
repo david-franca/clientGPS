@@ -1,4 +1,4 @@
-export interface Customer {
+export interface CustomerData {
   id: string
   active: boolean
   deleted: boolean

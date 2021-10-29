@@ -22,9 +22,4 @@ a {
 * {
   box-sizing: border-box;
 }
-
-.leaflet-container {
-  width: 100%;
-  height: 70vh;
-}
 `

@@ -1,10 +1,12 @@
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import {
+  Autocomplete,
   Heading,
   Pane,
   SelectField,
   Spinner,
   TextareaField,
+  TextInput,
   TextInputField,
   toaster,
 } from 'evergreen-ui'
@@ -17,7 +19,12 @@ import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
-import { BrasilApi, CidadesIGBE, CustomerForm } from '../../../models'
+import {
+  BrasilApi,
+  CidadesIGBE,
+  CustomerData,
+  CustomerForm,
+} from '../../../models'
 import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
@@ -86,6 +93,8 @@ const Customer = (): JSX.Element => {
   })
   const [cep, setCep] = useState<string>(formik.values.cep)
   const [cities, setCities] = useState<CidadesIGBE[]>([])
+  // const [customersData, setCustomersData] = useState<CustomerData>()
+  const [fullName, setFullName] = useState<Array<string>>([])
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setCep(e.target.value)
@@ -137,6 +146,26 @@ const Customer = (): JSX.Element => {
     }
   }, [formik.values.state])
 
+  useEffect(() => {
+    const timeOut = setTimeout(() => {
+      api
+        .get('customers')
+        .then(({ data }: AxiosResponse<CustomerData[]>) => {
+          const names: string[] = []
+          data.forEach(customer => {
+            names.push(customer.fullName)
+          })
+          setFullName(names)
+        })
+        .catch(() => {
+          toaster.warning('Cliente não encontrado')
+        })
+    }, 500)
+
+    return () => clearTimeout(timeOut)
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <Pane
       display="flex"
@@ -167,6 +196,22 @@ const Customer = (): JSX.Element => {
           width="100%"
           paddingX={30}
         >
+          <Autocomplete
+            title="Fruits"
+            onChange={changedItem => console.log(changedItem)}
+            items={fullName}
+          >
+            {({ getInputProps, getRef, inputValue }) => {
+              return (
+                <TextInput
+                  {...getInputProps()}
+                  placeholder="Fruits"
+                  value={inputValue}
+                  ref={getRef}
+                />
+              )
+            }}
+          </Autocomplete>
           <TextInputField
             id="fullName"
             required
