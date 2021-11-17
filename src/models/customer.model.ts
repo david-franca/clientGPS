@@ -19,6 +19,7 @@ export interface CustomerData {
 }
 
 export interface CustomerForm {
+  id?: string
   fullName: string
   cpfOrCnpj: string
   cellPhone: string

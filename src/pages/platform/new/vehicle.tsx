@@ -17,7 +17,7 @@ import { ptForm } from 'yup-locale-pt'
 import { Head } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
 import { vehiclesColor, vehiclesType } from '../../../config'
-import { Branch, CustomerData, Device as Devices } from '../../../models'
+import { BranchData, CustomerData, DeviceData } from '../../../models'
 import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
@@ -37,8 +37,8 @@ const initialValues = {
 
 const Device = (): JSX.Element => {
   const [customers, setCustomers] = useState<CustomerData[]>([])
-  const [devices, setDevices] = useState<Devices[]>([])
-  const [branches, setBranches] = useState<Branch[]>([])
+  const [devices, setDevices] = useState<DeviceData[]>([])
+  const [branches, setBranches] = useState<BranchData[]>([])
   const formSchema = Yup.object().shape({
     licensePlate: Yup.string().required(),
     type: Yup.string().required(),
@@ -84,6 +84,13 @@ const Device = (): JSX.Element => {
     formik.handleChange(e)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const selectedValue = (value: any) => {
+    if (value) {
+      formik.setValues(value)
+    }
+  }
+
   useEffect(() => {
     api
       .get('customers')
@@ -108,7 +115,7 @@ const Device = (): JSX.Element => {
   useEffect(() => {
     api
       .get('devices')
-      .then(({ data }: AxiosResponse<Devices[]>) => {
+      .then(({ data }: AxiosResponse<DeviceData[]>) => {
         setDevices(data)
       })
       .catch((e: AxiosError) => {
@@ -129,7 +136,7 @@ const Device = (): JSX.Element => {
   useEffect(() => {
     api
       .get('branches')
-      .then(({ data }: AxiosResponse<Branch[]>) => {
+      .then(({ data }: AxiosResponse<BranchData[]>) => {
         setBranches(data)
       })
       .catch((e: AxiosError) => {
@@ -345,6 +352,13 @@ const Device = (): JSX.Element => {
             disabled={formik.isSubmitting}
             newCLick={() => formik.resetForm()}
             redirect="/platform"
+            editClick={{
+              isShow: true,
+              sortBy: 'description',
+              listOf: 'description',
+              getBy: 'devices',
+            }}
+            selectedValue={selectedValue}
           />
           {formik.isSubmitting && (
             <Pane display="flex" alignItems="center" justifyContent="center">

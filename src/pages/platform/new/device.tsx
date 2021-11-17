@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios'
+import { AxiosError, AxiosResponse } from 'axios'
 import {
   Heading,
   Pane,
@@ -9,18 +9,20 @@ import {
   toaster,
 } from 'evergreen-ui'
 import { useFormik } from 'formik'
+import { useEffect, useState } from 'react'
 import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
+import { DeviceData } from '../../../models'
 import { timezone } from '../../../models/timezone.model'
 import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
 const initialValues = {
-  code: undefined,
+  code: 0,
   description: '',
   model: '',
   equipmentNumber: '',
@@ -28,9 +30,11 @@ const initialValues = {
   mobileOperator: '',
   chipNumber: '',
   timezone: '',
+  note: undefined,
 }
 
 const Device = (): JSX.Element => {
+  const [code, setCode] = useState(0)
   const formSchema = Yup.object().shape({
     code: Yup.number()
       .required()
@@ -72,6 +76,47 @@ const Device = (): JSX.Element => {
         })
     },
   })
+
+  const missingNumber = (data: number[]) => {
+    let missing
+    data.sort((a, b) => a - b)
+    for (let i = 1; i <= data.length; i++) {
+      if (data[i - 1] !== i) {
+        missing = i
+        break
+      }
+    }
+    if (!missing) {
+      return data[data.length - 1] + 1
+    } else {
+      return missing
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const selectedValue = (value: any) => {
+    if (value) {
+      formik.setValues(value)
+    }
+  }
+
+  useEffect(() => {
+    api
+      .get('devices')
+      .then(({ data }: AxiosResponse<DeviceData[]>) => {
+        const codeNumber: number[] = []
+        data.forEach(d => {
+          codeNumber.push(d.code)
+        })
+        console.log(codeNumber)
+        setCode(missingNumber(codeNumber))
+        formik.setFieldValue('code', code)
+      })
+      .catch((e: AxiosError) => {
+        toaster.warning(e.message)
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code])
 
   return (
     <Pane
@@ -255,6 +300,13 @@ const Device = (): JSX.Element => {
             disabled={formik.isSubmitting}
             newCLick={() => formik.resetForm()}
             redirect="/platform"
+            editClick={{
+              isShow: true,
+              sortBy: 'description',
+              listOf: 'description',
+              getBy: 'devices',
+            }}
+            selectedValue={selectedValue}
           />
           {formik.isSubmitting && (
             <Pane display="flex" alignItems="center" justifyContent="center">

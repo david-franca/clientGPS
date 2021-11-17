@@ -15,7 +15,7 @@ import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
-import { BranchForm, CustomerData } from '../../../models'
+import { BranchData, BranchForm, CustomerData } from '../../../models'
 import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
@@ -57,6 +57,12 @@ const Branch = (): JSX.Element => {
         })
     },
   })
+
+  const selectedValue = (value: BranchData) => {
+    if (value) {
+      formik.setValues(value)
+    }
+  }
 
   useEffect(() => {
     api
@@ -126,6 +132,7 @@ const Branch = (): JSX.Element => {
               }
               width="40%"
             >
+              <option value="">Selecione</option>
               {customers && customers.length > 0 ? (
                 customers.map(customer => (
                   <option key={customer.id} value={customer.id}>
@@ -152,6 +159,13 @@ const Branch = (): JSX.Element => {
             disabled={formik.isSubmitting}
             newCLick={() => formik.resetForm()}
             redirect="/platform"
+            editClick={{
+              isShow: true,
+              sortBy: 'name',
+              listOf: 'name',
+              getBy: 'branches',
+            }}
+            selectedValue={selectedValue}
           />
           {formik.isSubmitting && (
             <Pane display="flex" alignItems="center" justifyContent="center">

@@ -1,7 +1,7 @@
 import 'leaflet-defaulticon-compatibility'
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css'
 import 'leaflet/dist/leaflet.css'
-import { Fragment } from 'react'
+import { Fragment, useEffect } from 'react'
 
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 
@@ -25,9 +25,12 @@ interface MapProps {
 const FlyTo: React.FC<MapProps> = ({ center, vehicles }) => {
   const map = useMap()
 
-  if (center) {
-    map.flyTo([center.lat, center.lng], 10)
-  }
+  useEffect(() => {
+    if (center) {
+      map.flyTo([center.lat, center.lng], 12)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [center])
 
   return (
     <Fragment>

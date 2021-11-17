@@ -1,12 +1,10 @@
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import {
-  Autocomplete,
   Heading,
   Pane,
   SelectField,
   Spinner,
   TextareaField,
-  TextInput,
   TextInputField,
   toaster,
 } from 'evergreen-ui'
@@ -19,6 +17,7 @@ import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
+import { customersState } from '../../../config'
 import {
   BrasilApi,
   CidadesIGBE,
@@ -30,6 +29,7 @@ import { api } from '../../../utils'
 Yup.setLocale(ptForm)
 
 const initialValues: CustomerForm = {
+  id: '',
   fullName: '',
   cpfOrCnpj: '',
   cellPhone: '',
@@ -40,6 +40,7 @@ const initialValues: CustomerForm = {
   state: '',
   city: '',
   typeOfAddress: 'Residencial',
+  complement: '',
 }
 
 const Customer = (): JSX.Element => {
@@ -67,43 +68,74 @@ const Customer = (): JSX.Element => {
     initialValues,
     onSubmit: values => {
       values.cellPhone = values.cellPhone.replace(/[^0-9]/g, '')
+      values.cpfOrCnpj = values.cpfOrCnpj.replace(/[^0-9]/g, '')
       if (!values.complement) {
         delete values.complement
       }
-      api
-        .post('customers', values)
-        .then(() => {
-          formik.setSubmitting(false)
-          toaster.success('Cliente cadastrado')
-          formik.resetForm()
-        })
-        .catch((e: AxiosError) => {
-          if (e.response) {
-            const message: string | string[] = e.response.data.message
-            if (typeof message === 'string') {
-              toaster.danger(message)
-            }
-            if (Array.isArray(message)) {
-              message.map(data => toaster.danger(data))
-            }
-          }
-          formik.setSubmitting(false)
-        })
+      if (values.id) {
+        api
+          .patch(`customers/${values.id}`, values)
+          .then(() => {
+            formik.setSubmitting(false)
+            toaster.success('Cliente alterado')
+            formik.resetForm()
+          })
+          .catch((e: AxiosError) => {
+            handleError(e)
+          })
+      }
+      if (!values.id) {
+        api
+          .post('customers', values)
+          .then(() => {
+            formik.setSubmitting(false)
+            toaster.success('Cliente cadastrado')
+            formik.resetForm()
+          })
+          .catch((e: AxiosError) => {
+            handleError(e)
+          })
+      }
     },
   })
   const [cep, setCep] = useState<string>(formik.values.cep)
   const [cities, setCities] = useState<CidadesIGBE[]>([])
-  // const [customersData, setCustomersData] = useState<CustomerData>()
-  const [fullName, setFullName] = useState<Array<string>>([])
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setCep(e.target.value)
     formik.handleChange(e)
   }
 
+  const selectedValue = (value: CustomerData) => {
+    if (value) {
+      formik.setValues(value)
+      setCep(value.cep)
+    }
+  }
+
+  const handleError = (e: AxiosError) => {
+    if (e.response) {
+      const message: string | string[] = e.response.data.message
+      if (typeof message === 'string') {
+        toaster.danger(message)
+      }
+      if (Array.isArray(message)) {
+        message.map(data => toaster.danger(data))
+      }
+    }
+    formik.setSubmitting(false)
+  }
+
+  const handleClear = () => {
+    setCep('')
+    setCities([])
+    formik.resetForm()
+  }
+
   useEffect(() => {
     const timeOut = setTimeout(() => {
       if (cep && cep !== '_____-___') {
+        console.log('CEP Alterado')
         axios
           .get(`https://brasilapi.com.br/api/cep/v1/${cep}`)
           .then(({ data }: AxiosResponse<BrasilApi>) => {
@@ -146,26 +178,6 @@ const Customer = (): JSX.Element => {
     }
   }, [formik.values.state])
 
-  useEffect(() => {
-    const timeOut = setTimeout(() => {
-      api
-        .get('customers')
-        .then(({ data }: AxiosResponse<CustomerData[]>) => {
-          const names: string[] = []
-          data.forEach(customer => {
-            names.push(customer.fullName)
-          })
-          setFullName(names)
-        })
-        .catch(() => {
-          toaster.warning('Cliente não encontrado')
-        })
-    }, 500)
-
-    return () => clearTimeout(timeOut)
-    //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   return (
     <Pane
       display="flex"
@@ -196,22 +208,6 @@ const Customer = (): JSX.Element => {
           width="100%"
           paddingX={30}
         >
-          <Autocomplete
-            title="Fruits"
-            onChange={changedItem => console.log(changedItem)}
-            items={fullName}
-          >
-            {({ getInputProps, getRef, inputValue }) => {
-              return (
-                <TextInput
-                  {...getInputProps()}
-                  placeholder="Fruits"
-                  value={inputValue}
-                  ref={getRef}
-                />
-              )
-            }}
-          </Autocomplete>
           <TextInputField
             id="fullName"
             required
@@ -354,34 +350,11 @@ const Customer = (): JSX.Element => {
               validationMessage={formik.touched.state && formik.errors.state}
               isInvalid={formik.touched.state && Boolean(formik.errors.state)}
             >
-              <option value="">Selecione</option>
-              <option value="AC">Acre</option>
-              <option value="AL">Alagoas</option>
-              <option value="AP">Amapá</option>
-              <option value="AM">Amazonas</option>
-              <option value="BA">Bahia</option>
-              <option value="CE">Ceará</option>
-              <option value="DF">Distrito Federal</option>
-              <option value="ES">Espírito Santo</option>
-              <option value="GO">Goiás</option>
-              <option value="MA">Maranhão</option>
-              <option value="MS">Mato Grosso do Sul</option>
-              <option value="MT">Mato Grosso</option>
-              <option value="MG">Minas Gerais</option>
-              <option value="PA">Pará</option>
-              <option value="PB">Paraíba</option>
-              <option value="PR">Paraná</option>
-              <option value="PE">Pernambuco</option>
-              <option value="PI">Piauí</option>
-              <option value="RJ">Rio de Janeiro</option>
-              <option value="RN">Rio Grande do Norte</option>
-              <option value="RS">Rio Grande do Sul</option>
-              <option value="RO">Rondônia</option>
-              <option value="RR">Roraima</option>
-              <option value="SC">Santa Catarina</option>
-              <option value="SP">São Paulo</option>
-              <option value="SE">Sergipe</option>
-              <option value="TO">Tocantins</option>
+              {customersState.map((state, index) => (
+                <option key={index} value={state.value}>
+                  {state.title}
+                </option>
+              ))}
             </SelectField>
             <SelectField
               id="city"
@@ -407,8 +380,15 @@ const Customer = (): JSX.Element => {
           <TextareaField label="Observações" />
           <ButtonsForm
             disabled={formik.isSubmitting}
-            newCLick={() => formik.resetForm()}
+            newCLick={handleClear}
             redirect="/platform"
+            editClick={{
+              isShow: true,
+              sortBy: 'fullName',
+              listOf: 'fullName',
+              getBy: 'customers',
+            }}
+            selectedValue={selectedValue}
           />
           {formik.isSubmitting && (
             <Pane display="flex" alignItems="center" justifyContent="center">
