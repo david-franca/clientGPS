@@ -16,7 +16,7 @@ export enum MobileOperator {
   Outras,
 }
 
-enum Timezone {
+export enum Timezone {
   GMT_14 = 'GMT-14',
   GMT_13 = 'GMT-13',
   GMT_12 = 'GMT-12',
@@ -45,7 +45,7 @@ enum Timezone {
   GMT12 = 'GMT+12',
 }
 
-export interface Device {
+export interface DeviceData {
   id: string
   active: boolean
   deleted: boolean
@@ -62,11 +62,11 @@ export interface Device {
   location: Location[]
   alert: Alert[]
   status: Status[]
-  note: string | null
+  note: string | null | undefined
 }
 
 export interface DeviceForm {
-  code: number
+  code: number | undefined
   description: string
   model: Model
   equipmentNumber: string
@@ -74,5 +74,5 @@ export interface DeviceForm {
   mobileOperator: MobileOperator
   chipNumber: string
   timezone: Timezone
-  note?: string
+  note?: string | null | undefined
 }

@@ -1,4 +1,4 @@
-export type Branch = {
+export type BranchData = {
   id: string
   active: boolean
   deleted: boolean

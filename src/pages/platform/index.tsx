@@ -11,7 +11,6 @@ import {
   MapIcon,
   Pane,
   PaneProps,
-  Position,
   RefreshIcon,
   SearchInput,
   Table,
@@ -25,8 +24,9 @@ import { useState } from 'react'
 import { Head, Loading, Menu } from '../../components'
 import { configMenu } from '../../config/menu.config'
 import { useAxios } from '../../hooks/useAxios'
-import { Customer } from '../../models/customer.model'
+import { CustomerData } from '../../models/customer.model'
 import { Vehicle } from '../../models/vehicles.model'
+import { PlatformContainer } from '../../styles/Maps'
 import { capitalizeWords } from '../../utils'
 
 enum Refresh {
@@ -54,8 +54,9 @@ const paneRowFilters: PaneProps = {
 const Platform: NextPage = () => {
   const [customerId, setCustomerId] = useState('')
   const [refreshTime, setRefreshTime] = useState<Refresh>(Refresh.DONT)
+  const [center, setCenter] = useState<{ lat: number; lng: number }>()
 
-  const toggleActive = (customer: Customer) => {
+  const toggleActive = (customer: CustomerData) => {
     if (customer.id === customerId) {
       setCustomerId('')
     } else {
@@ -63,7 +64,19 @@ const Platform: NextPage = () => {
     }
   }
 
-  const { data: customers } = useAxios<Customer[]>('customers', {})
+  const toggleCenter = (vehicle: Vehicle) => {
+    if (vehicle) {
+      if (vehicle.device) {
+        const device = vehicle.device
+        setCenter({
+          lat: device.location[0].latitude,
+          lng: device.location[0].longitude,
+        })
+      }
+    }
+  }
+
+  const { data: customers } = useAxios<CustomerData[]>('customers', {})
   const { data: vehicles } = useAxios<Vehicle[]>(
     `vehicles?where={"customerId":"${customerId}"}`,
     {}
@@ -74,7 +87,7 @@ const Platform: NextPage = () => {
   }
 
   return (
-    <Pane>
+    <PlatformContainer>
       <Head title="Plataforma" />
       <Menu config={configMenu} />
       <Pane display="flex">
@@ -82,7 +95,7 @@ const Platform: NextPage = () => {
           <Table borderRadius="none">
             <Table.Head height="3vh">
               <Table.TextHeaderCell
-                maxWidth="18%"
+                maxWidth="25%"
                 borderRight={true}
               ></Table.TextHeaderCell>
               <Table.TextHeaderCell>Clientes</Table.TextHeaderCell>
@@ -98,7 +111,7 @@ const Platform: NextPage = () => {
                   <Table.TextCell
                     borderRight={true}
                     textAlign="end"
-                    maxWidth="18%"
+                    maxWidth="25%"
                     isNumber
                   >
                     {index + 1}
@@ -112,7 +125,10 @@ const Platform: NextPage = () => {
           </Table>
         </Pane>
         <Pane className="leaflet-container" about="map" zIndex={1}>
-          <MapWithNoSSR vehicles={customerId && vehicles ? vehicles : []} />
+          <MapWithNoSSR
+            vehicles={customerId && vehicles ? vehicles : []}
+            center={center}
+          />
         </Pane>
       </Pane>
       <Pane width="100vw" border={true}>
@@ -207,7 +223,11 @@ const Platform: NextPage = () => {
           <Table.VirtualBody height="20vh">
             {customerId && vehicles
               ? vehicles.map(vehicle => (
-                  <Table.Row key={vehicle.id} isSelectable>
+                  <Table.Row
+                    key={vehicle.id}
+                    isSelectable
+                    onClick={() => toggleCenter(vehicle)}
+                  >
                     <Table.TextCell>{vehicle.licensePlate}</Table.TextCell>
                     <Table.TextCell>{}</Table.TextCell>
                     <Table.TextCell>
@@ -245,7 +265,7 @@ const Platform: NextPage = () => {
           </Table.VirtualBody>
         </Table>
       </Pane>
-    </Pane>
+    </PlatformContainer>
   )
 }
 

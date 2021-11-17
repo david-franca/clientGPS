@@ -1,4 +1,4 @@
-import { Device } from './device.model'
+import { DeviceData } from './device.model'
 
 export type Vehicle = {
   id: string
@@ -18,7 +18,7 @@ export type Vehicle = {
   chassi: string
   renavam: string
   observation: string
-  device?: Device
+  device?: DeviceData
 }
 
 export type VehicleForm = {
@@ -34,5 +34,5 @@ export type VehicleForm = {
   chassi: string
   renavam: string
   observation?: string
-  device?: Device
+  device?: DeviceData
 }

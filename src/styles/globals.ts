@@ -1,7 +1,15 @@
+import { createGlobalStyle } from 'styled-components'
+
+export default createGlobalStyle`
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box
+}
+
 html,
 body {
-  padding: 0;
-  margin: 0;
+  color: ${({ theme }) => theme.colors.primary};
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 }
@@ -14,8 +22,4 @@ a {
 * {
   box-sizing: border-box;
 }
-
-.leaflet-container {
-  width: 100%;
-  height: 70vh;
-}
+`

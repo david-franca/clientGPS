@@ -1,6 +1,5 @@
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import {
-  Button,
   Heading,
   Pane,
   SelectField,
@@ -11,19 +10,26 @@ import {
 } from 'evergreen-ui'
 import { useFormik } from 'formik'
 import { validateBr } from 'js-brasil'
-import { useRouter } from 'next/router'
 import { ChangeEvent, useEffect, useState } from 'react'
 import Mask from 'react-input-mask'
 import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
 import { Head } from '../../../components'
-import { BrasilApi, CidadesIGBE, CustomerForm } from '../../../models'
+import { ButtonsForm } from '../../../components/ButtonsForm'
+import { customersState } from '../../../config'
+import {
+  BrasilApi,
+  CidadesIGBE,
+  CustomerData,
+  CustomerForm,
+} from '../../../models'
 import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
 const initialValues: CustomerForm = {
+  id: '',
   fullName: '',
   cpfOrCnpj: '',
   cellPhone: '',
@@ -34,10 +40,10 @@ const initialValues: CustomerForm = {
   state: '',
   city: '',
   typeOfAddress: 'Residencial',
+  complement: '',
 }
 
 const Customer = (): JSX.Element => {
-  const router = useRouter()
   const formSchema = Yup.object().shape({
     fullName: Yup.string().required().min(2),
     cpfOrCnpj: Yup.string()
@@ -62,28 +68,34 @@ const Customer = (): JSX.Element => {
     initialValues,
     onSubmit: values => {
       values.cellPhone = values.cellPhone.replace(/[^0-9]/g, '')
+      values.cpfOrCnpj = values.cpfOrCnpj.replace(/[^0-9]/g, '')
       if (!values.complement) {
         delete values.complement
       }
-      api
-        .post('customers', values)
-        .then(() => {
-          formik.setSubmitting(false)
-          toaster.success('Cliente cadastrado')
-          formik.resetForm()
-        })
-        .catch((e: AxiosError) => {
-          if (e.response) {
-            const message: string | string[] = e.response.data.message
-            if (typeof message === 'string') {
-              toaster.danger(message)
-            }
-            if (Array.isArray(message)) {
-              message.map(data => toaster.danger(data))
-            }
-          }
-          formik.setSubmitting(false)
-        })
+      if (values.id) {
+        api
+          .patch(`customers/${values.id}`, values)
+          .then(() => {
+            formik.setSubmitting(false)
+            toaster.success('Cliente alterado')
+            formik.resetForm()
+          })
+          .catch((e: AxiosError) => {
+            handleError(e)
+          })
+      }
+      if (!values.id) {
+        api
+          .post('customers', values)
+          .then(() => {
+            formik.setSubmitting(false)
+            toaster.success('Cliente cadastrado')
+            formik.resetForm()
+          })
+          .catch((e: AxiosError) => {
+            handleError(e)
+          })
+      }
     },
   })
   const [cep, setCep] = useState<string>(formik.values.cep)
@@ -94,9 +106,36 @@ const Customer = (): JSX.Element => {
     formik.handleChange(e)
   }
 
+  const selectedValue = (value: CustomerData) => {
+    if (value) {
+      formik.setValues(value)
+      setCep(value.cep)
+    }
+  }
+
+  const handleError = (e: AxiosError) => {
+    if (e.response) {
+      const message: string | string[] = e.response.data.message
+      if (typeof message === 'string') {
+        toaster.danger(message)
+      }
+      if (Array.isArray(message)) {
+        message.map(data => toaster.danger(data))
+      }
+    }
+    formik.setSubmitting(false)
+  }
+
+  const handleClear = () => {
+    setCep('')
+    setCities([])
+    formik.resetForm()
+  }
+
   useEffect(() => {
     const timeOut = setTimeout(() => {
       if (cep && cep !== '_____-___') {
+        console.log('CEP Alterado')
         axios
           .get(`https://brasilapi.com.br/api/cep/v1/${cep}`)
           .then(({ data }: AxiosResponse<BrasilApi>) => {
@@ -311,34 +350,11 @@ const Customer = (): JSX.Element => {
               validationMessage={formik.touched.state && formik.errors.state}
               isInvalid={formik.touched.state && Boolean(formik.errors.state)}
             >
-              <option value="">Selecione</option>
-              <option value="AC">Acre</option>
-              <option value="AL">Alagoas</option>
-              <option value="AP">Amapá</option>
-              <option value="AM">Amazonas</option>
-              <option value="BA">Bahia</option>
-              <option value="CE">Ceará</option>
-              <option value="DF">Distrito Federal</option>
-              <option value="ES">Espírito Santo</option>
-              <option value="GO">Goiás</option>
-              <option value="MA">Maranhão</option>
-              <option value="MS">Mato Grosso do Sul</option>
-              <option value="MT">Mato Grosso</option>
-              <option value="MG">Minas Gerais</option>
-              <option value="PA">Pará</option>
-              <option value="PB">Paraíba</option>
-              <option value="PR">Paraná</option>
-              <option value="PE">Pernambuco</option>
-              <option value="PI">Piauí</option>
-              <option value="RJ">Rio de Janeiro</option>
-              <option value="RN">Rio Grande do Norte</option>
-              <option value="RS">Rio Grande do Sul</option>
-              <option value="RO">Rondônia</option>
-              <option value="RR">Roraima</option>
-              <option value="SC">Santa Catarina</option>
-              <option value="SP">São Paulo</option>
-              <option value="SE">Sergipe</option>
-              <option value="TO">Tocantins</option>
+              {customersState.map((state, index) => (
+                <option key={index} value={state.value}>
+                  {state.title}
+                </option>
+              ))}
             </SelectField>
             <SelectField
               id="city"
@@ -362,28 +378,18 @@ const Customer = (): JSX.Element => {
             </SelectField>
           </Pane>
           <TextareaField label="Observações" />
-          <Pane display="flex" justifyContent="space-around" paddingBottom={20}>
-            <Button
-              appearance="primary"
-              intent="success"
-              size="medium"
-              width="30%"
-              type="submit"
-              disabled={formik.isSubmitting}
-            >
-              Salvar
-            </Button>
-            <Button
-              appearance="primary"
-              intent="danger"
-              size="medium"
-              width="30%"
-              type="button"
-              onClick={() => router.push('/platform')}
-            >
-              Cancelar
-            </Button>
-          </Pane>
+          <ButtonsForm
+            disabled={formik.isSubmitting}
+            newCLick={handleClear}
+            redirect="/platform"
+            editClick={{
+              isShow: true,
+              sortBy: 'fullName',
+              listOf: 'fullName',
+              getBy: 'customers',
+            }}
+            selectedValue={selectedValue}
+          />
           {formik.isSubmitting && (
             <Pane display="flex" alignItems="center" justifyContent="center">
               <Spinner marginY={10} />

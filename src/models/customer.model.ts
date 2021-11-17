@@ -1,4 +1,4 @@
-export interface Customer {
+export interface CustomerData {
   id: string
   active: boolean
   deleted: boolean
@@ -19,6 +19,7 @@ export interface Customer {
 }
 
 export interface CustomerForm {
+  id?: string
   fullName: string
   cpfOrCnpj: string
   cellPhone: string
