@@ -14,10 +14,10 @@ import Mask from 'react-input-mask'
 import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
-import { Head } from '../../../components'
+import { Head, Menu } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
-import { vehiclesColor, vehiclesType } from '../../../config'
-import { BranchData, CustomerData, DeviceData } from '../../../models'
+import { configMenu, vehiclesColor, vehiclesType } from '../../../config'
+import { BranchData, CustomerData, DeviceData, Vehicle } from '../../../models'
 import { api } from '../../../utils'
 
 Yup.setLocale(ptForm)
@@ -29,7 +29,7 @@ const initialValues = {
   color: '',
   model: '',
   observation: '',
-  year: undefined,
+  year: 0,
   customerId: '',
   deviceId: '',
   branchId: '',
@@ -39,6 +39,8 @@ const Device = (): JSX.Element => {
   const [customers, setCustomers] = useState<CustomerData[]>([])
   const [devices, setDevices] = useState<DeviceData[]>([])
   const [branches, setBranches] = useState<BranchData[]>([])
+  const [exclude, setExclude] = useState(true)
+
   const formSchema = Yup.object().shape({
     licensePlate: Yup.string().required(),
     type: Yup.string().required(),
@@ -79,15 +81,22 @@ const Device = (): JSX.Element => {
     },
   })
 
+  const handleClear = () => {
+    setExclude(true)
+    formik.resetForm()
+  }
+
   const handlePlate = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.target.value = String(e.target.value).toUpperCase()
     formik.handleChange(e)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const selectedValue = (value: any) => {
+  const selectedValue = (value: Vehicle) => {
     if (value) {
+      console.log(value)
       formik.setValues(value)
+      setExclude(false)
     }
   }
 
@@ -155,216 +164,226 @@ const Device = (): JSX.Element => {
   }, [])
 
   return (
-    <Pane
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      flexDirection="column"
-      height="100vh"
-      background="blue700"
-    >
+    <Pane>
+      <Pane height="3vh">
+        <Head title="Cliente" />
+        <Menu config={configMenu} />
+      </Pane>
       <Pane
-        overflowX="auto"
-        border={true}
-        width={600}
-        background="gray200"
         display="flex"
+        justifyContent="center"
         alignItems="center"
         flexDirection="column"
-        borderRadius={20}
+        height="97vh"
+        background="blue700"
       >
-        <Head title="Cliente" />
-        <Heading is="h3" padding={10}>
-          Cadastro de Veiculo
-        </Heading>
         <Pane
-          is="form"
-          noValidate
-          onSubmit={formik.handleSubmit}
-          width="100%"
-          paddingX={30}
+          overflowX="auto"
+          border={true}
+          width={600}
+          background="gray200"
+          display="flex"
+          alignItems="center"
+          flexDirection="column"
+          borderRadius={20}
         >
+          <Heading is="h3" padding={10}>
+            Cadastro de Veiculo
+          </Heading>
           <Pane
-            display="flex"
-            flexDirection="row"
-            justifyContent="space-between"
+            is="form"
+            noValidate
+            onSubmit={formik.handleSubmit}
+            width="100%"
+            paddingX={30}
           >
-            <Mask
-              mask="aaa-9**9"
-              maskChar=""
-              value={formik.values.licensePlate}
-              onChange={e => handlePlate(e)}
+            <Pane
+              display="flex"
+              flexDirection="row"
+              justifyContent="space-between"
             >
-              {() => (
-                <TextInputField
-                  id="licensePlate"
-                  required
-                  isInvalid={
-                    formik.touched.licensePlate &&
-                    Boolean(formik.errors.licensePlate)
-                  }
-                  label="Placa"
-                  type="text"
-                  width="20%"
-                  validationMessage={
-                    formik.touched.licensePlate && formik.errors.licensePlate
-                  }
-                />
-              )}
-            </Mask>
-            <SelectField
-              id="type"
-              isInvalid={formik.touched.type && Boolean(formik.errors.type)}
-              required
-              label="Tipo do Veiculo"
-              value={formik.values.type}
-              onChange={formik.handleChange}
-              validationMessage={formik.touched.type && formik.errors.type}
-              width="40%"
-            >
-              {vehiclesType.map((option, index) => (
-                <option value={option.value} key={index}>
-                  {option.title}
-                </option>
-              ))}
-            </SelectField>
-          </Pane>
-          <Pane
-            display="flex"
-            flexDirection="row"
-            justifyContent="space-between"
-          >
-            <TextInputField
-              id="brand"
-              required
-              isInvalid={formik.touched.brand && Boolean(formik.errors.brand)}
-              label="Marca"
-              type="text"
-              value={formik.values.brand}
-              onChange={formik.handleChange}
-              validationMessage={formik.touched.brand && formik.errors.brand}
-            />
-          </Pane>
-          <Pane
-            display="flex"
-            flexDirection="row"
-            justifyContent="space-between"
-          >
-            <SelectField
-              id="color"
-              isInvalid={formik.touched.color && Boolean(formik.errors.color)}
-              required
-              label="Cor"
-              value={formik.values.color}
-              onChange={formik.handleChange}
-              validationMessage={formik.touched.color && formik.errors.color}
-              width="40%"
-            >
-              {vehiclesColor.map((color, index) => (
-                <option key={index} value={color.value}>
-                  {color.title}
-                </option>
-              ))}
-            </SelectField>
-            <TextInputField
-              id="model"
-              required
-              isInvalid={formik.touched.model && Boolean(formik.errors.model)}
-              label="Modelo"
-              type="text"
-              value={formik.values.model}
-              onChange={formik.handleChange}
-              validationMessage={formik.touched.model && formik.errors.model}
-            />
-          </Pane>
-          <Pane
-            display="flex"
-            flexDirection="row"
-            justifyContent="space-between"
-          >
-            <TextInputField
-              id="year"
-              required
-              isInvalid={formik.touched.year && Boolean(formik.errors.year)}
-              label="Ano"
-              type="text"
-              value={formik.values.year}
-              onChange={formik.handleChange}
-              validationMessage={formik.touched.year && formik.errors.year}
-            />
-          </Pane>
-          <SelectField
-            id="customerId"
-            isInvalid={
-              formik.touched.customerId && Boolean(formik.errors.customerId)
-            }
-            required
-            label="Cliente"
-            value={formik.values.customerId}
-            onChange={formik.handleChange}
-            validationMessage={
-              formik.touched.customerId && formik.errors.customerId
-            }
-          >
-            <option value="">Selecione</option>
-            {customers.map(customer => (
-              <option key={customer.id}>{customer.fullName}</option>
-            ))}
-          </SelectField>
-          <SelectField
-            id="deviceId"
-            isInvalid={
-              formik.touched.deviceId && Boolean(formik.errors.deviceId)
-            }
-            required
-            label="Equipamento"
-            value={formik.values.deviceId}
-            onChange={formik.handleChange}
-            validationMessage={
-              formik.touched.deviceId && formik.errors.deviceId
-            }
-          >
-            <option value="">Selecione</option>
-            {devices.map(device => (
-              <option key={device.id}>{device.description}</option>
-            ))}
-          </SelectField>
-          <SelectField
-            id="branchId"
-            isInvalid={
-              formik.touched.branchId && Boolean(formik.errors.branchId)
-            }
-            required
-            label="Filial"
-            value={formik.values.branchId}
-            onChange={formik.handleChange}
-            validationMessage={
-              formik.touched.branchId && formik.errors.branchId
-            }
-          >
-            <option value="">Selecione</option>
-            {branches.map(branch => (
-              <option key={branch.id}>{branch.name}</option>
-            ))}
-          </SelectField>
-          <TextareaField label="Observações" />
-          <ButtonsForm
-            disabled={formik.isSubmitting}
-            newCLick={() => formik.resetForm()}
-            redirect="/platform"
-            editClick={{
-              isShow: true,
-              sortBy: 'description',
-              listOf: 'description',
-              getBy: 'devices',
-            }}
-            selectedValue={selectedValue}
-          />
-          {formik.isSubmitting && (
-            <Pane display="flex" alignItems="center" justifyContent="center">
-              <Spinner marginY={10} />
+              <Mask
+                mask="aaa-9**9"
+                value={formik.values.licensePlate}
+                onChange={e => handlePlate(e)}
+              >
+                {() => (
+                  <TextInputField
+                    id="licensePlate"
+                    required
+                    isInvalid={
+                      formik.touched.licensePlate &&
+                      Boolean(formik.errors.licensePlate)
+                    }
+                    label="Placa"
+                    type="text"
+                    width="20%"
+                    validationMessage={
+                      formik.touched.licensePlate && formik.errors.licensePlate
+                    }
+                  />
+                )}
+              </Mask>
+              <SelectField
+                id="type"
+                isInvalid={formik.touched.type && Boolean(formik.errors.type)}
+                required
+                label="Tipo do Veiculo"
+                value={formik.values.type}
+                onChange={formik.handleChange}
+                validationMessage={formik.touched.type && formik.errors.type}
+                width="40%"
+              >
+                {vehiclesType.map((option, index) => (
+                  <option value={option.value} key={index}>
+                    {option.title}
+                  </option>
+                ))}
+              </SelectField>
             </Pane>
-          )}
+            <Pane
+              display="flex"
+              flexDirection="row"
+              justifyContent="space-between"
+            >
+              <TextInputField
+                id="brand"
+                required
+                isInvalid={formik.touched.brand && Boolean(formik.errors.brand)}
+                label="Marca"
+                type="text"
+                value={formik.values.brand}
+                onChange={formik.handleChange}
+                validationMessage={formik.touched.brand && formik.errors.brand}
+              />
+            </Pane>
+            <Pane
+              display="flex"
+              flexDirection="row"
+              justifyContent="space-between"
+            >
+              <SelectField
+                id="color"
+                isInvalid={formik.touched.color && Boolean(formik.errors.color)}
+                required
+                label="Cor"
+                value={formik.values.color}
+                onChange={formik.handleChange}
+                validationMessage={formik.touched.color && formik.errors.color}
+                width="40%"
+              >
+                {vehiclesColor.map((color, index) => (
+                  <option key={index} value={color.value}>
+                    {color.title}
+                  </option>
+                ))}
+              </SelectField>
+              <TextInputField
+                id="model"
+                required
+                isInvalid={formik.touched.model && Boolean(formik.errors.model)}
+                label="Modelo"
+                type="text"
+                value={formik.values.model}
+                onChange={formik.handleChange}
+                validationMessage={formik.touched.model && formik.errors.model}
+              />
+            </Pane>
+            <Pane
+              display="flex"
+              flexDirection="row"
+              justifyContent="space-between"
+            >
+              <TextInputField
+                id="year"
+                required
+                isInvalid={formik.touched.year && Boolean(formik.errors.year)}
+                label="Ano"
+                type="text"
+                value={formik.values.year}
+                onChange={formik.handleChange}
+                validationMessage={formik.touched.year && formik.errors.year}
+              />
+            </Pane>
+            <SelectField
+              id="customerId"
+              isInvalid={
+                formik.touched.customerId && Boolean(formik.errors.customerId)
+              }
+              required
+              label="Cliente"
+              value={formik.values.customerId}
+              onChange={formik.handleChange}
+              validationMessage={
+                formik.touched.customerId && formik.errors.customerId
+              }
+            >
+              <option value="">Selecione</option>
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.fullName}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              id="deviceId"
+              isInvalid={
+                formik.touched.deviceId && Boolean(formik.errors.deviceId)
+              }
+              required
+              label="Equipamento"
+              value={formik.values.deviceId}
+              onChange={formik.handleChange}
+              validationMessage={
+                formik.touched.deviceId && formik.errors.deviceId
+              }
+            >
+              <option value="">Selecione</option>
+              {devices.map(device => (
+                <option key={device.id} value={device.id}>
+                  {device.description}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              id="branchId"
+              isInvalid={
+                formik.touched.branchId && Boolean(formik.errors.branchId)
+              }
+              required
+              label="Filial"
+              value={formik.values.branchId}
+              onChange={formik.handleChange}
+              validationMessage={
+                formik.touched.branchId && formik.errors.branchId
+              }
+            >
+              <option value="">Selecione</option>
+              {branches.map(branch => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </SelectField>
+            <TextareaField label="Observações" />
+            <ButtonsForm
+              disabled={formik.isSubmitting}
+              newCLick={handleClear}
+              exclude={exclude}
+              editClick={{
+                isShow: true,
+                sortBy: 'licensePlate',
+                listOf: 'licensePlate',
+                getBy: 'vehicles',
+              }}
+              selectedValue={selectedValue}
+            />
+            {formik.isSubmitting && (
+              <Pane display="flex" alignItems="center" justifyContent="center">
+                <Spinner marginY={10} />
+              </Pane>
+            )}
+          </Pane>
         </Pane>
       </Pane>
     </Pane>

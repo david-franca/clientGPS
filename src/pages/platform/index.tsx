@@ -13,13 +13,17 @@ import {
   PaneProps,
   RefreshIcon,
   SearchInput,
+  Strong,
   Table,
   Text,
   TickIcon,
+  Tooltip,
 } from 'evergreen-ui'
 import { NextPage } from 'next'
+import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
+import Empty from '../../../public/empty.svg'
 
 import { Head, Loading, Menu } from '../../components'
 import { configMenu } from '../../config/menu.config'
@@ -158,13 +162,17 @@ const Platform: NextPage = () => {
           </Pane>
           <Pane {...paneRowFilters} width="7%">
             <IconButton width="33%" height="3vh" icon={TickIcon} />
-            <IconButton
-              width="33%"
-              height="3vh"
-              icon={CleanIcon}
-              onClick={() => setCustomerId('')}
-            />
-            <IconButton width="33%" height="3vh" icon={FilterIcon} />
+            <Tooltip content="Limpar">
+              <IconButton
+                width="33%"
+                height="3vh"
+                icon={CleanIcon}
+                onClick={() => setCustomerId('')}
+              />
+            </Tooltip>
+            <Tooltip content="Filtro">
+              <IconButton width="33%" height="3vh" icon={FilterIcon} />
+            </Tooltip>
           </Pane>
           <Pane {...paneRowFilters} width="15%">
             <Text paddingRight={6}>Atualização:</Text>
@@ -186,9 +194,15 @@ const Platform: NextPage = () => {
             />
           </Pane>
           <Pane {...paneRowFilters} width="7%">
-            <IconButton width="33%" height="3vh" icon={RefreshIcon} />
-            <IconButton width="33%" height="3vh" icon={ExportIcon} />
-            <IconButton width="33%" height="3vh" icon={MapIcon} />
+            <Tooltip content="Atualizar">
+              <IconButton width="33%" height="3vh" icon={RefreshIcon} />
+            </Tooltip>
+            <Tooltip content="Exportar">
+              <IconButton width="33%" height="3vh" icon={ExportIcon} />
+            </Tooltip>
+            <Tooltip content="Abrir no Mapa">
+              <IconButton width="33%" height="3vh" icon={MapIcon} />
+            </Tooltip>
           </Pane>
           <Pane {...paneRowFilters} width="12%">
             <Text paddingRight={6}>Registros:</Text>
@@ -221,47 +235,58 @@ const Platform: NextPage = () => {
             <Table.TextHeaderCell>Status</Table.TextHeaderCell>
           </Table.Head>
           <Table.VirtualBody height="20vh">
-            {customerId && vehicles
-              ? vehicles.map(vehicle => (
-                  <Table.Row
-                    key={vehicle.id}
-                    isSelectable
-                    onClick={() => toggleCenter(vehicle)}
-                  >
-                    <Table.TextCell>{vehicle.licensePlate}</Table.TextCell>
-                    <Table.TextCell>{}</Table.TextCell>
-                    <Table.TextCell>
-                      {vehicle.device?.location[0]?.fixTime
-                        ? new Date(
-                            vehicle.device?.location[0]?.fixTime
-                          ).toLocaleDateString('pt-br', {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                            second: 'numeric',
-                            timeZoneName: 'short',
-                          })
-                        : ''}
-                    </Table.TextCell>
-                    <Table.TextCell>
-                      {vehicle.device?.location[0]?.speed}
-                    </Table.TextCell>
-                    <Table.TextCell>
-                      {vehicle.device?.status[0]?.ignition ? (
-                        <Icon
-                          icon={KeyIcon}
-                          color={
-                            vehicle.device?.status[0]?.ignition
-                              ? 'green'
-                              : 'gray'
-                          }
-                        />
-                      ) : (
-                        ''
-                      )}
-                    </Table.TextCell>
-                  </Table.Row>
-                ))
-              : ''}
+            {customerId && vehicles ? (
+              vehicles.map(vehicle => (
+                <Table.Row
+                  key={vehicle.id}
+                  isSelectable
+                  onClick={() => toggleCenter(vehicle)}
+                >
+                  <Table.TextCell>{vehicle.licensePlate}</Table.TextCell>
+                  <Table.TextCell>{}</Table.TextCell>
+                  <Table.TextCell>
+                    {vehicle.device?.location[0]?.fixTime
+                      ? new Date(
+                          vehicle.device?.location[0]?.fixTime
+                        ).toLocaleDateString('pt-br', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          second: 'numeric',
+                          timeZoneName: 'short',
+                        })
+                      : ''}
+                  </Table.TextCell>
+                  <Table.TextCell>
+                    {vehicle.device?.location[0]?.speed}
+                  </Table.TextCell>
+                  <Table.TextCell>
+                    {vehicle.device?.status[0]?.ignition ? (
+                      <Icon
+                        icon={KeyIcon}
+                        color={
+                          vehicle.device?.status[0]?.ignition ? 'green' : 'gray'
+                        }
+                      />
+                    ) : (
+                      ''
+                    )}
+                  </Table.TextCell>
+                </Table.Row>
+              ))
+            ) : (
+              <Pane
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                flexDirection="column"
+                height={70}
+                marginTop={20}
+                opacity={0.3}
+              >
+                <Image src={Empty} width={50} height={50} alt="Empty Box" />
+                <Strong>Sem Dados</Strong>
+              </Pane>
+            )}
           </Table.VirtualBody>
         </Table>
       </Pane>

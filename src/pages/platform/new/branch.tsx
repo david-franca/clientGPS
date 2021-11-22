@@ -13,8 +13,9 @@ import { useEffect, useState } from 'react'
 import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
 
-import { Head } from '../../../components'
+import { Head, Menu } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
+import { configMenu } from '../../../config'
 import { BranchData, BranchForm, CustomerData } from '../../../models'
 import { api } from '../../../utils'
 
@@ -27,6 +28,7 @@ const initialValues: BranchForm = {
 
 const Branch = (): JSX.Element => {
   const [customers, setCustomers] = useState<CustomerData[]>([])
+  const [exclude, setExclude] = useState(true)
   const formSchema = Yup.object().shape({
     customerId: Yup.string().required().uuid(),
     name: Yup.string().required().min(1),
@@ -61,7 +63,13 @@ const Branch = (): JSX.Element => {
   const selectedValue = (value: BranchData) => {
     if (value) {
       formik.setValues(value)
+      setExclude(false)
     }
+  }
+
+  const handleClear = () => {
+    setExclude(true)
+    formik.resetForm()
   }
 
   useEffect(() => {
@@ -84,94 +92,98 @@ const Branch = (): JSX.Element => {
   }, [])
 
   return (
-    <Pane
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      flexDirection="column"
-      height="100vh"
-      background="blue700"
-    >
+    <Pane>
+      <Pane height="3vh">
+        <Head title="Cliente" />
+        <Menu config={configMenu} />
+      </Pane>
       <Pane
-        overflowX="auto"
-        border={true}
-        width={600}
-        background="gray200"
         display="flex"
+        justifyContent="center"
         alignItems="center"
         flexDirection="column"
-        borderRadius={20}
+        height="97vh"
+        background="blue700"
       >
-        <Head title="Cliente" />
-        <Heading is="h3" padding={10}>
-          Cadastro de Filial
-        </Heading>
         <Pane
-          is="form"
-          noValidate
-          onSubmit={formik.handleSubmit}
-          width="100%"
-          paddingX={30}
+          overflowX="auto"
+          border={true}
+          width={600}
+          background="gray200"
+          display="flex"
+          alignItems="center"
+          flexDirection="column"
         >
+          <Heading is="h3" padding={10}>
+            Cadastro de Filial
+          </Heading>
           <Pane
-            display="flex"
-            flexDirection="row"
-            justifyContent="space-between"
+            is="form"
+            noValidate
+            onSubmit={formik.handleSubmit}
+            width="100%"
+            paddingX={30}
           >
-            <SelectField
-              id="customerId"
-              isInvalid={
-                formik.touched.customerId && Boolean(formik.errors.customerId)
-              }
-              required
-              label="Clientes"
-              value={formik.values.customerId}
-              onChange={formik.handleChange}
-              validationMessage={
-                formik.touched.customerId && formik.errors.customerId
-              }
-              width="40%"
+            <Pane
+              display="flex"
+              flexDirection="row"
+              justifyContent="space-between"
             >
-              <option value="">Selecione</option>
-              {customers && customers.length > 0 ? (
-                customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.fullName}
-                  </option>
-                ))
-              ) : (
+              <SelectField
+                id="customerId"
+                isInvalid={
+                  formik.touched.customerId && Boolean(formik.errors.customerId)
+                }
+                required
+                label="Clientes"
+                value={formik.values.customerId}
+                onChange={formik.handleChange}
+                validationMessage={
+                  formik.touched.customerId && formik.errors.customerId
+                }
+                width="40%"
+              >
                 <option value="">Selecione</option>
-              )}
-            </SelectField>
-            <TextInputField
-              id="name"
-              required
-              isInvalid={formik.touched.name && Boolean(formik.errors.name)}
-              label="Nome da Filial"
-              type="text"
-              value={formik.values.name}
-              onChange={formik.handleChange}
-              validationMessage={formik.touched.name && formik.errors.name}
-            />
-          </Pane>
-          <TextareaField label="Observações" />
-          <ButtonsForm
-            disabled={formik.isSubmitting}
-            newCLick={() => formik.resetForm()}
-            redirect="/platform"
-            editClick={{
-              isShow: true,
-              sortBy: 'name',
-              listOf: 'name',
-              getBy: 'branches',
-            }}
-            selectedValue={selectedValue}
-          />
-          {formik.isSubmitting && (
-            <Pane display="flex" alignItems="center" justifyContent="center">
-              <Spinner marginY={10} />
+                {customers && customers.length > 0 ? (
+                  customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.fullName}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">Selecione</option>
+                )}
+              </SelectField>
+              <TextInputField
+                id="name"
+                required
+                isInvalid={formik.touched.name && Boolean(formik.errors.name)}
+                label="Nome da Filial"
+                type="text"
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                validationMessage={formik.touched.name && formik.errors.name}
+              />
             </Pane>
-          )}
+            <TextareaField label="Observações" />
+            <ButtonsForm
+              disabled={formik.isSubmitting}
+              newCLick={handleClear}
+              exclude={exclude}
+              editClick={{
+                isShow: true,
+                sortBy: 'name',
+                listOf: 'name',
+                getBy: 'branches',
+              }}
+              selectedValue={selectedValue}
+            />
+            {formik.isSubmitting && (
+              <Pane display="flex" alignItems="center" justifyContent="center">
+                <Spinner marginY={10} />
+              </Pane>
+            )}
+          </Pane>
         </Pane>
       </Pane>
     </Pane>

@@ -1,6 +1,5 @@
 import { AxiosResponse } from 'axios'
 import { Button, Dialog, Pane, Select, toaster } from 'evergreen-ui'
-import { useRouter } from 'next/router'
 import { useState } from 'react'
 
 import { api } from '../utils'
@@ -8,13 +7,13 @@ import { api } from '../utils'
 interface ButtonsFormProps {
   disabled: boolean
   newCLick: () => void
+  exclude: boolean
   editClick: {
     isShow: boolean
     sortBy: string
     listOf: string
     getBy: string
   }
-  redirect: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   selectedValue: (e: any) => void
 }
@@ -22,14 +21,13 @@ interface ButtonsFormProps {
 export const ButtonsForm = ({
   disabled,
   newCLick,
-  redirect,
   editClick,
   selectedValue,
+  exclude,
 }: ButtonsFormProps): JSX.Element => {
   const [isShown, setIsShown] = useState(false)
   const [dialogValue, setDialogValue] = useState('')
   const [axiosData, setAxiosData] = useState<never[]>([])
-  const router = useRouter()
 
   const handleEdit = (value: string) => {
     if (value) {
@@ -109,6 +107,16 @@ export const ButtonsForm = ({
       </Button>
       <Button
         appearance="primary"
+        intent="danger"
+        size="medium"
+        width="20%"
+        type="button"
+        disabled={exclude}
+      >
+        Excluir
+      </Button>
+      <Button
+        appearance="primary"
         intent="info"
         size="medium"
         width="20%"
@@ -116,16 +124,6 @@ export const ButtonsForm = ({
         onClick={newCLick}
       >
         Novo
-      </Button>
-      <Button
-        appearance="primary"
-        intent="danger"
-        size="medium"
-        width="20%"
-        type="button"
-        onClick={() => router.push(redirect)}
-      >
-        Cancelar
       </Button>
     </Pane>
   )

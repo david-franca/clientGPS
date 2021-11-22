@@ -1,22 +1,16 @@
 import { Button, Menu as MenuUi, Pane, Popover, Position } from 'evergreen-ui'
 import { useRouter } from 'next/router'
 import { SyntheticEvent } from 'react'
-
-interface Itens {
-  name: string
-  select: string
-}
-
-interface MenuItemProps {
-  icon?: false | JSX.Element | React.ElementType<unknown> | null | undefined
-  itens: Itens[]
-}
-
-interface MenuProps {
-  config: [{ name: string; itens: Itens[] }]
-}
+import { MenuItemProps, MenuProps } from '../@types/menu'
 
 export const Menu: React.FC<MenuProps> = ({ config }) => {
+  const router = useRouter()
+
+  const handleClick = (e: SyntheticEvent<Element, Event>) => {
+    e.preventDefault()
+    router.push('/platform')
+  }
+
   return (
     <Pane
       about="menu"
@@ -27,6 +21,19 @@ export const Menu: React.FC<MenuProps> = ({ config }) => {
       position="relative"
       height="auto"
     >
+      <Button
+        height="3vh"
+        border="Menu"
+        borderRadius={0}
+        paddingX="0.7em"
+        size="small"
+        fontSize="0.8em"
+        background="Menu"
+        color="MenuText"
+        onClick={handleClick}
+      >
+        Plataforma
+      </Button>
       {config.map((component, index) => (
         <Popover
           key={index}
@@ -63,15 +70,17 @@ const MenuComponent: React.FC<MenuItemProps> = ({ icon, itens }) => {
   return (
     <MenuUi>
       <MenuUi.Group>
-        {itens.map((item, index) => (
-          <MenuUi.Item
-            icon={icon}
-            key={index}
-            onSelect={e => handleClick(e, item.select)}
-          >
-            {item.name}
-          </MenuUi.Item>
-        ))}
+        {itens
+          ? itens.map((item, index) => (
+              <MenuUi.Item
+                icon={icon}
+                key={index}
+                onSelect={e => handleClick(e, item.select)}
+              >
+                {item.name}
+              </MenuUi.Item>
+            ))
+          : ''}
       </MenuUi.Group>
     </MenuUi>
   )
