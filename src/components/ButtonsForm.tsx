@@ -1,6 +1,8 @@
+import { Popconfirm } from 'antd'
 import { AxiosResponse } from 'axios'
 import { Button, Dialog, Pane, Select, toaster } from 'evergreen-ui'
 import { useState } from 'react'
+import { QuestionCircleOutlined } from '@ant-design/icons'
 
 import { api } from '../utils'
 
@@ -8,11 +10,11 @@ interface ButtonsFormProps {
   disabled: boolean
   newCLick: () => void
   exclude: boolean
+  onExclude: () => void
+  submit: string
   editClick: {
     isShow: boolean
     sortBy: string
-    listOf: string
-    getBy: string
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   selectedValue: (e: any) => void
@@ -24,6 +26,8 @@ export const ButtonsForm = ({
   editClick,
   selectedValue,
   exclude,
+  onExclude,
+  submit,
 }: ButtonsFormProps): JSX.Element => {
   const [isShown, setIsShown] = useState(false)
   const [dialogValue, setDialogValue] = useState('')
@@ -40,7 +44,7 @@ export const ButtonsForm = ({
   const handleEditCLick = (value: boolean) => {
     setIsShown(value)
     api
-      .get(editClick.getBy)
+      .get(submit, { params: { where: { deleted: false } } })
       .then(({ data }: AxiosResponse<never[]>) => {
         setAxiosData(
           data.sort((a, b) => {
@@ -80,7 +84,7 @@ export const ButtonsForm = ({
           </option>
           {axiosData.map((data, index) => (
             <option value={JSON.stringify(data)} key={index}>
-              {data[editClick.listOf]}
+              {data[editClick.sortBy]}
             </option>
           ))}
         </Select>
@@ -105,16 +109,24 @@ export const ButtonsForm = ({
       >
         Editar
       </Button>
-      <Button
-        appearance="primary"
-        intent="danger"
-        size="medium"
-        width="20%"
-        type="button"
-        disabled={exclude}
+      <Popconfirm
+        title="Tem certeza？"
+        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+        onConfirm={() => onExclude()}
+        okText="Sim"
+        cancelText="Não"
       >
-        Excluir
-      </Button>
+        <Button
+          appearance="primary"
+          intent="danger"
+          size="medium"
+          width="20%"
+          type="button"
+          disabled={exclude}
+        >
+          Excluir
+        </Button>
+      </Popconfirm>
       <Button
         appearance="primary"
         intent="info"

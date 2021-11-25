@@ -1,3 +1,5 @@
+import { Empty } from 'antd'
+import { AxiosError, AxiosResponse } from 'axios'
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Checkbox,
@@ -13,25 +15,27 @@ import {
   PaneProps,
   RefreshIcon,
   SearchInput,
+  Select,
   Strong,
   Table,
   Text,
+  TextInput,
   TickIcon,
   Tooltip,
 } from 'evergreen-ui'
 import { NextPage } from 'next'
-import Image from 'next/image'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
-import Empty from '../../../public/empty.svg'
+import { ChangeEvent, useEffect, useState } from 'react'
 
 import { Head, Loading, Menu } from '../../components'
+import { conditionsConfig, filterConfig } from '../../config'
 import { configMenu } from '../../config/menu.config'
 import { useAxios } from '../../hooks/useAxios'
+import { Location, MobileOperator, Model, Timezone } from '../../models'
 import { CustomerData } from '../../models/customer.model'
 import { Vehicle } from '../../models/vehicles.model'
 import { PlatformContainer } from '../../styles/Maps'
-import { capitalizeWords } from '../../utils'
+import { api, capitalizeWords, handleError } from '../../utils'
 
 enum Refresh {
   DONT = 'Não atualizar',
@@ -59,6 +63,11 @@ const Platform: NextPage = () => {
   const [customerId, setCustomerId] = useState('')
   const [refreshTime, setRefreshTime] = useState<Refresh>(Refresh.DONT)
   const [center, setCenter] = useState<{ lat: number; lng: number }>()
+  const [filter, setFilter] = useState('')
+  const [condition, setCondition] = useState('')
+  const [parameter, setParameter] = useState('')
+  const [useVehicles, setUseVehicles] = useState<Vehicle[]>([])
+  const [zoom, setZoom] = useState(6)
 
   const toggleActive = (customer: CustomerData) => {
     if (customer.id === customerId) {
@@ -68,7 +77,7 @@ const Platform: NextPage = () => {
     }
   }
 
-  const toggleCenter = (vehicle: Vehicle) => {
+  const toggleCenter = (vehicle: Vehicle, zoom?: number) => {
     if (vehicle) {
       if (vehicle.device) {
         const device = vehicle.device
@@ -76,8 +85,76 @@ const Platform: NextPage = () => {
           lat: device.location[0].latitude,
           lng: device.location[0].longitude,
         })
+        setZoom(zoom ?? 12)
       }
     }
+  }
+
+  const handleClear = () => {
+    setCustomerId('')
+    setUseVehicles([])
+    setFilter('')
+    setCondition('')
+    setParameter('')
+    const location: Location = {
+      active: true,
+      cellId: '',
+      course: '',
+      createAt: new Date(Date.now()),
+      deleted: false,
+      deviceId: '',
+      fixTime: new Date(),
+      id: '',
+      lac: 0,
+      latitude: -3.8580372,
+      longitude: -38.495503,
+      mcc: 0,
+      mnc: 0,
+      satellite: 0,
+      serverTime: new Date(Date.now()),
+      speed: 0,
+      updateAt: new Date(Date.now()),
+    }
+
+    const zeroCenter: Vehicle = {
+      active: true,
+      branchId: '',
+      brand: '',
+      chassi: '',
+      color: '',
+      createAt: new Date(Date.now()).toISOString(),
+      customerId: '',
+      deleted: false,
+      deviceId: '',
+      id: '',
+      licensePlate: '',
+      model: '',
+      observation: '',
+      renavam: '',
+      type: '',
+      updateAt: new Date(Date.now()).toISOString(),
+      year: new Date(Date.now()).getFullYear(),
+      device: {
+        location: [location],
+        active: true,
+        alert: [],
+        chipNumber: '',
+        code: 0,
+        createAt: new Date().toISOString(),
+        deleted: false,
+        description: '',
+        equipmentNumber: '',
+        id: '',
+        mobileOperator: MobileOperator.Outras,
+        model: Model.GT06,
+        note: '',
+        phone: '',
+        status: [],
+        timezone: Timezone.GMT_3,
+        updateAt: new Date().toISOString(),
+      },
+    }
+    toggleCenter(zeroCenter, 6)
   }
 
   const { data: customers } = useAxios<CustomerData[]>('customers', {})
@@ -85,6 +162,37 @@ const Platform: NextPage = () => {
     `vehicles?where={"customerId":"${customerId}"}`,
     {}
   )
+
+  useEffect(() => {
+    if (vehicles) {
+      setUseVehicles(vehicles)
+    }
+  }, [vehicles])
+
+  useEffect(() => {
+    const timeOut = setTimeout(() => {
+      if (condition && filter && parameter) {
+        api
+          .get('vehicles', {
+            params: {
+              where: {
+                [filter]: {
+                  [condition]: parameter,
+                },
+              },
+            },
+          })
+          .then(({ data }: AxiosResponse<Vehicle[]>) => {
+            setUseVehicles(data)
+          })
+          .catch((e: AxiosError) => {
+            handleError(e)
+          })
+      }
+    }, 500)
+
+    return () => clearTimeout(timeOut)
+  }, [condition, filter, parameter])
 
   if (!customers) {
     return <Loading />
@@ -130,8 +238,9 @@ const Platform: NextPage = () => {
         </Pane>
         <Pane className="leaflet-container" about="map" zIndex={1}>
           <MapWithNoSSR
-            vehicles={customerId && vehicles ? vehicles : []}
+            vehicles={customerId && useVehicles ? useVehicles : []}
             center={center}
+            zoom={zoom}
           />
         </Pane>
       </Pane>
@@ -144,30 +253,51 @@ const Platform: NextPage = () => {
         >
           <Pane {...paneRowFilters} width="13%">
             <Text paddingRight={6}>Filtro:</Text>
-            <Combobox
-              items={['Veículo', 'Cliente', 'Placa']}
+            <Select
               width="100%"
               height="3vh"
-            />
+              onChange={e => setFilter(e.target.value)}
+              value={filter}
+            >
+              <option value=""></option>
+              {filterConfig.map((item, index) => (
+                <option value={item.value} key={index}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
           </Pane>
-          <Pane {...paneRowFilters} width="5%">
-            <Combobox
-              items={['=', '<>', '>=', '<=']}
+          <Pane {...paneRowFilters} width="10%">
+            <Select
               width="100%"
               height="3vh"
-            />
+              onChange={e => setCondition(e.target.value)}
+              value={condition}
+            >
+              <option value=""></option>
+              {conditionsConfig.map((item, index) => (
+                <option value={item.value} key={index}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
           </Pane>
           <Pane {...paneRowFilters} width="20%">
-            <SearchInput placeholder="Digite um parâmetro" width="100%" />
+            <TextInput
+              placeholder="Digite um parâmetro"
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setParameter(e.target.value)
+              }
+              value={parameter}
+            />
           </Pane>
           <Pane {...paneRowFilters} width="7%">
-            <IconButton width="33%" height="3vh" icon={TickIcon} />
             <Tooltip content="Limpar">
               <IconButton
                 width="33%"
                 height="3vh"
                 icon={CleanIcon}
-                onClick={() => setCustomerId('')}
+                onClick={handleClear}
               />
             </Tooltip>
             <Tooltip content="Filtro">
@@ -235,8 +365,8 @@ const Platform: NextPage = () => {
             <Table.TextHeaderCell>Status</Table.TextHeaderCell>
           </Table.Head>
           <Table.VirtualBody height="20vh">
-            {customerId && vehicles ? (
-              vehicles.map(vehicle => (
+            {(customerId && useVehicles) || useVehicles ? (
+              useVehicles.map(vehicle => (
                 <Table.Row
                   key={vehicle.id}
                   isSelectable
@@ -283,8 +413,7 @@ const Platform: NextPage = () => {
                 marginTop={20}
                 opacity={0.3}
               >
-                <Image src={Empty} width={50} height={50} alt="Empty Box" />
-                <Strong>Sem Dados</Strong>
+                <Empty />
               </Pane>
             )}
           </Table.VirtualBody>

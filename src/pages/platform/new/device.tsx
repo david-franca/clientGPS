@@ -18,7 +18,7 @@ import { ButtonsForm } from '../../../components/ButtonsForm'
 import { configMenu } from '../../../config'
 import { DeviceData } from '../../../models'
 import { timezone } from '../../../models/timezone.model'
-import { api } from '../../../utils'
+import { api, handleDelete } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
@@ -37,6 +37,7 @@ const initialValues = {
 const Device = (): JSX.Element => {
   const [code, setCode] = useState(0)
   const [exclude, setExclude] = useState(true)
+  const [id, setId] = useState('')
 
   const formSchema = Yup.object().shape({
     code: Yup.number()
@@ -106,6 +107,7 @@ const Device = (): JSX.Element => {
     if (value) {
       formik.setValues(value)
       setExclude(false)
+      setId(value.id)
     }
   }
 
@@ -316,11 +318,14 @@ const Device = (): JSX.Element => {
               disabled={formik.isSubmitting}
               newCLick={handleClear}
               exclude={exclude}
+              submit="devices"
+              onExclude={() => {
+                handleDelete('devices', id, 'Cliente deletado com sucesso')
+                handleClear()
+              }}
               editClick={{
                 isShow: true,
                 sortBy: 'description',
-                listOf: 'description',
-                getBy: 'devices',
               }}
               selectedValue={selectedValue}
             />

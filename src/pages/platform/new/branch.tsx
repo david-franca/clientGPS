@@ -17,7 +17,7 @@ import { Head, Menu } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
 import { configMenu } from '../../../config'
 import { BranchData, BranchForm, CustomerData } from '../../../models'
-import { api } from '../../../utils'
+import { api, handleDelete } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
@@ -29,6 +29,7 @@ const initialValues: BranchForm = {
 const Branch = (): JSX.Element => {
   const [customers, setCustomers] = useState<CustomerData[]>([])
   const [exclude, setExclude] = useState(true)
+  const [id, setId] = useState('')
   const formSchema = Yup.object().shape({
     customerId: Yup.string().required().uuid(),
     name: Yup.string().required().min(1),
@@ -64,6 +65,7 @@ const Branch = (): JSX.Element => {
     if (value) {
       formik.setValues(value)
       setExclude(false)
+      setId(value.id)
     }
   }
 
@@ -170,11 +172,13 @@ const Branch = (): JSX.Element => {
               disabled={formik.isSubmitting}
               newCLick={handleClear}
               exclude={exclude}
+              onExclude={() =>
+                handleDelete('branches', id, 'Filial deletada com sucesso')
+              }
+              submit="branches"
               editClick={{
                 isShow: true,
                 sortBy: 'name',
-                listOf: 'name',
-                getBy: 'branches',
               }}
               selectedValue={selectedValue}
             />

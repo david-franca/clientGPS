@@ -20,14 +20,15 @@ const MapPlaceholder = () => {
 interface MapProps {
   vehicles: Vehicle[]
   center?: { lat: number; lng: number }
+  zoom?: number
 }
 
-const FlyTo: React.FC<MapProps> = ({ center, vehicles }) => {
+const FlyTo: React.FC<MapProps> = ({ center, vehicles, zoom }) => {
   const map = useMap()
 
   useEffect(() => {
     if (center) {
-      map.flyTo([center.lat, center.lng], 12)
+      map.flyTo([center.lat, center.lng], zoom ?? 12)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center])
@@ -54,15 +55,15 @@ const FlyTo: React.FC<MapProps> = ({ center, vehicles }) => {
   )
 }
 
-const ContainerMap: React.FC<MapProps> = ({ vehicles, center }) => {
+const ContainerMap: React.FC<MapProps> = ({ vehicles, center, zoom }) => {
   return (
     <MapContainer
       center={[-3.8580372, -38.495503]}
-      zoom={6}
+      zoom={zoom}
       scrollWheelZoom={false}
       placeholder={<MapPlaceholder />}
     >
-      <FlyTo center={center} vehicles={vehicles} />
+      <FlyTo center={center} vehicles={vehicles} zoom={zoom} />
     </MapContainer>
   )
 }

@@ -18,7 +18,7 @@ import { Head, Menu } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
 import { configMenu, vehiclesColor, vehiclesType } from '../../../config'
 import { BranchData, CustomerData, DeviceData, Vehicle } from '../../../models'
-import { api } from '../../../utils'
+import { api, handleDelete } from '../../../utils'
 
 Yup.setLocale(ptForm)
 
@@ -40,6 +40,7 @@ const Device = (): JSX.Element => {
   const [devices, setDevices] = useState<DeviceData[]>([])
   const [branches, setBranches] = useState<BranchData[]>([])
   const [exclude, setExclude] = useState(true)
+  const [id, setId] = useState('')
 
   const formSchema = Yup.object().shape({
     licensePlate: Yup.string().required(),
@@ -97,6 +98,7 @@ const Device = (): JSX.Element => {
       console.log(value)
       formik.setValues(value)
       setExclude(false)
+      setId(value.id)
     }
   }
 
@@ -370,11 +372,14 @@ const Device = (): JSX.Element => {
               disabled={formik.isSubmitting}
               newCLick={handleClear}
               exclude={exclude}
+              submit="vehicles"
+              onExclude={() => {
+                handleDelete('vehicles', id, 'Veículo deletado com sucesso')
+                handleClear()
+              }}
               editClick={{
                 isShow: true,
                 sortBy: 'licensePlate',
-                listOf: 'licensePlate',
-                getBy: 'vehicles',
               }}
               selectedValue={selectedValue}
             />

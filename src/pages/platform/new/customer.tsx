@@ -6,13 +6,13 @@ import {
   Spinner,
   TextareaField,
   TextInputField,
-  toaster,
 } from 'evergreen-ui'
 import { useFormik } from 'formik'
 import { ChangeEvent, useEffect, useState } from 'react'
 import Mask from 'react-input-mask'
 import * as Yup from 'yup'
 import { ptForm } from 'yup-locale-pt'
+import { message } from 'antd'
 
 import { Head, Menu } from '../../../components'
 import { ButtonsForm } from '../../../components/ButtonsForm'
@@ -23,7 +23,13 @@ import {
   CustomerData,
   CustomerForm,
 } from '../../../models'
-import { api, validateCep, validateCpfCnpj } from '../../../utils'
+import {
+  api,
+  handleDelete,
+  handleError,
+  validateCep,
+  validateCpfCnpj,
+} from '../../../utils'
 
 Yup.setLocale(ptForm)
 
@@ -76,11 +82,12 @@ const Customer = (): JSX.Element => {
           .patch(`customers/${values.id}`, values)
           .then(() => {
             formik.setSubmitting(false)
-            toaster.success('Cliente alterado')
+            message.success('Cliente alterado')
             formik.resetForm()
           })
           .catch((e: AxiosError) => {
             handleError(e)
+            formik.setSubmitting(false)
           })
       }
       if (!values.id) {
@@ -88,11 +95,12 @@ const Customer = (): JSX.Element => {
           .post('customers', values)
           .then(() => {
             formik.setSubmitting(false)
-            toaster.success('Cliente cadastrado')
+            message.success('Cliente cadastrado')
             formik.resetForm()
           })
           .catch((e: AxiosError) => {
             handleError(e)
+            formik.setSubmitting(false)
           })
       }
     },
@@ -100,6 +108,7 @@ const Customer = (): JSX.Element => {
   const [cep, setCep] = useState<string>(formik.values.cep)
   const [cities, setCities] = useState<CidadesIGBE[]>([])
   const [exclude, setExclude] = useState(true)
+  const [id, setId] = useState('')
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setCep(e.target.value)
@@ -111,20 +120,8 @@ const Customer = (): JSX.Element => {
       formik.setValues(value)
       setCep(value.cep)
       setExclude(false)
+      setId(value.id)
     }
-  }
-
-  const handleError = (e: AxiosError) => {
-    if (e.response) {
-      const message: string | string[] = e.response.data.message
-      if (typeof message === 'string') {
-        toaster.danger(message)
-      }
-      if (Array.isArray(message)) {
-        message.map(data => toaster.danger(data))
-      }
-    }
-    formik.setSubmitting(false)
   }
 
   const handleClear = () => {
@@ -156,7 +153,7 @@ const Customer = (): JSX.Element => {
             })
           })
           .catch(() => {
-            toaster.warning('CEP não encontrado')
+            message.warning('CEP não encontrado')
           })
       }
     }, 500)
@@ -175,7 +172,7 @@ const Customer = (): JSX.Element => {
           setCities(data)
         })
         .catch((e: AxiosError) => {
-          toaster.warning(e.message)
+          message.warning(e.message)
         })
     }
   }, [formik.values.state])
@@ -393,11 +390,14 @@ const Customer = (): JSX.Element => {
               disabled={formik.isSubmitting}
               newCLick={handleClear}
               exclude={exclude}
+              submit="customers"
+              onExclude={() => {
+                handleDelete('customers', id, 'Cliente deletado com sucesso')
+                handleClear()
+              }}
               editClick={{
                 isShow: true,
                 sortBy: 'fullName',
-                listOf: 'fullName',
-                getBy: 'customers',
               }}
               selectedValue={selectedValue}
             />
