@@ -1,2 +1,6 @@
 export * from './api.utils'
 export * from './format.utils'
+export * from './cep'
+export * from './cprOrCnpj'
+export * from './handle'
+export * from './variables'

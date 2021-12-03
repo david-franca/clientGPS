@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "antd",
     "caractere",
     "chassi",
     "CNPJ",
@@ -13,6 +14,7 @@
     "latlng",
     "locationfound",
     "Mapbox",
+    "Popconfirm",
     "Registros",
     "renavam",
     "SUNTECH"
@@ -25,10 +27,7 @@
     "activityBar.inactiveForeground": "#15202b99",
     "activityBarBadge.background": "#da05ac",
     "activityBarBadge.foreground": "#e7e7e7",
-    "editorGroup.border": "#2fcefa",
-    "panel.border": "#2fcefa",
     "sash.hoverBorder": "#2fcefa",
-    "sideBar.border": "#2fcefa",
     "statusBar.background": "#2fcefa",
     "statusBar.foreground": "#15202b",
     "statusBarItem.hoverBackground": "#06bdf0",

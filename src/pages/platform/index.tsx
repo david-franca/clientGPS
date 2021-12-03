@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Empty } from 'antd'
 import {
+  Autocomplete,
   Checkbox,
   CleanIcon,
   Combobox,
@@ -11,23 +12,30 @@ import {
   MapIcon,
   Pane,
   PaneProps,
-  Position,
+  Popover,
   RefreshIcon,
-  SearchInput,
+  RemoveIcon,
+  Select,
   Table,
   Text,
-  TickIcon,
+  TextInput,
+  Tooltip,
 } from 'evergreen-ui'
 import { NextPage } from 'next'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 
 import { Head, Loading, Menu } from '../../components'
+import { conditionsConfig, filterConfig } from '../../config'
 import { configMenu } from '../../config/menu.config'
 import { useAxios } from '../../hooks/useAxios'
-import { Customer } from '../../models/customer.model'
+import { CustomerData } from '../../models/customer.model'
 import { Vehicle } from '../../models/vehicles.model'
-import { capitalizeWords } from '../../utils'
+import { PlatformContainer } from '../../styles/Maps'
+import { capitalizeWords, zeroCenter } from '../../utils'
+import { filterVehicles } from '../../utils/filters.utils'
+
+const { TextCell, TextHeaderCell, Row, VirtualBody } = Table
 
 enum Refresh {
   DONT = 'Não atualizar',
@@ -53,9 +61,17 @@ const paneRowFilters: PaneProps = {
 
 const Platform: NextPage = () => {
   const [customerId, setCustomerId] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [refreshTime, setRefreshTime] = useState<Refresh>(Refresh.DONT)
+  const [center, setCenter] = useState<{ lat: number; lng: number }>()
+  const [filter, setFilter] = useState('')
+  const [condition, setCondition] = useState('')
+  const [parameter, setParameter] = useState('')
+  const [useVehicles, setUseVehicles] = useState<Vehicle[]>([])
+  const [zoom, setZoom] = useState(6)
+  const [autocompleteItens, setAutocompleteItens] = useState<Array<string>>([])
 
-  const toggleActive = (customer: Customer) => {
+  const toggleActive = (customer: CustomerData) => {
     if (customer.id === customerId) {
       setCustomerId('')
     } else {
@@ -63,56 +79,124 @@ const Platform: NextPage = () => {
     }
   }
 
-  const { data: customers } = useAxios<Customer[]>('customers', {})
-  const { data: vehicles } = useAxios<Vehicle[]>(
-    `vehicles?where={"customerId":"${customerId}"}`,
-    {}
-  )
+  const toggleCenter = (vehicle: Vehicle, zoom?: number) => {
+    if (vehicle) {
+      if (vehicle.device) {
+        const device = vehicle.device
+        setCenter({
+          lat: device.location[0].latitude,
+          lng: device.location[0].longitude,
+        })
+        setZoom(zoom ?? 12)
+      }
+    }
+  }
+
+  const handleClear = () => {
+    setCustomerId('')
+    setUseVehicles([])
+    setFilter('')
+    setCondition('')
+    setParameter('')
+    toggleCenter(zeroCenter, 6)
+  }
+
+  const handleAutocomplete = (value: string) => {
+    const v: Vehicle[] = []
+    vehicles
+      ? vehicles.forEach(vehicle => {
+          if (vehicle.licensePlate === value) {
+            v.push(vehicle)
+          }
+        })
+      : []
+    setUseVehicles(old => [...old, ...v])
+  }
+
+  const { data: customers } = useAxios<CustomerData[]>('customers', {})
+  const { data: vehicles } = useAxios<Vehicle[]>(`vehicles`, {})
+
+  useEffect(() => {
+    if (vehicles && customerId) {
+      const vehicle = vehicles.filter(value => value.customerId === customerId)
+      setUseVehicles(vehicle)
+    }
+  }, [customerId, vehicles])
+
+  useEffect(() => {
+    const timeOut = setTimeout(() => {
+      if (condition && filter && parameter) {
+        if (vehicles) {
+          console.log(condition)
+          const array: Vehicle[] = filterVehicles(
+            vehicles,
+            condition,
+            parameter
+          )
+          setUseVehicles(old => [...old, ...array])
+        }
+      }
+    }, 500)
+
+    return () => clearTimeout(timeOut)
+  }, [condition, filter, parameter, vehicles])
+
+  useEffect(() => {
+    if (condition && filter && vehicles) {
+      const filter: string[] = []
+      vehicles.forEach(vehicle => {
+        filter.push(vehicle.licensePlate)
+      })
+      setAutocompleteItens(filter)
+    }
+  }, [condition, filter, vehicles])
 
   if (!customers) {
     return <Loading />
   }
 
   return (
-    <Pane>
+    <PlatformContainer>
       <Head title="Plataforma" />
       <Menu config={configMenu} />
       <Pane display="flex">
         <Pane about="customers" width="20vw" height="70vh">
           <Table borderRadius="none">
             <Table.Head height="3vh">
-              <Table.TextHeaderCell
-                maxWidth="18%"
+              <TextHeaderCell
+                maxWidth="25%"
                 borderRight={true}
-              ></Table.TextHeaderCell>
-              <Table.TextHeaderCell>Clientes</Table.TextHeaderCell>
+              ></TextHeaderCell>
+              <TextHeaderCell>Clientes</TextHeaderCell>
             </Table.Head>
-            <Table.VirtualBody height="67vh">
+            <VirtualBody height="67vh">
               {customers.map((customer, index) => (
-                <Table.Row
+                <Row
                   key={customer.id}
                   isSelectable
                   background={customerId === customer.id ? 'green300' : ''}
                   onSelect={() => toggleActive(customer)}
                 >
-                  <Table.TextCell
+                  <TextCell
                     borderRight={true}
                     textAlign="end"
-                    maxWidth="18%"
+                    maxWidth="25%"
                     isNumber
                   >
                     {index + 1}
-                  </Table.TextCell>
-                  <Table.TextCell>
-                    {capitalizeWords(customer.fullName)}
-                  </Table.TextCell>
-                </Table.Row>
+                  </TextCell>
+                  <TextCell>{capitalizeWords(customer.fullName)}</TextCell>
+                </Row>
               ))}
-            </Table.VirtualBody>
+            </VirtualBody>
           </Table>
         </Pane>
         <Pane className="leaflet-container" about="map" zIndex={1}>
-          <MapWithNoSSR vehicles={customerId && vehicles ? vehicles : []} />
+          <MapWithNoSSR
+            vehicles={customerId && useVehicles ? useVehicles : []}
+            center={center}
+            zoom={zoom}
+          />
         </Pane>
       </Pane>
       <Pane width="100vw" border={true}>
@@ -124,31 +208,110 @@ const Platform: NextPage = () => {
         >
           <Pane {...paneRowFilters} width="13%">
             <Text paddingRight={6}>Filtro:</Text>
-            <Combobox
-              items={['Veículo', 'Cliente', 'Placa']}
+            <Select
               width="100%"
               height="3vh"
-            />
+              onChange={e => setFilter(e.target.value)}
+              value={filter}
+            >
+              <option value=""></option>
+              {filterConfig.map((item, index) => (
+                <option value={item.value} key={index}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
           </Pane>
-          <Pane {...paneRowFilters} width="5%">
-            <Combobox
-              items={['=', '<>', '>=', '<=']}
+          <Pane {...paneRowFilters} width="10%">
+            <Select
               width="100%"
               height="3vh"
-            />
+              onChange={e => setCondition(e.target.value)}
+              value={condition}
+            >
+              <option value=""></option>
+              {conditionsConfig.map((item, index) => (
+                <option value={item.value} key={index}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
           </Pane>
           <Pane {...paneRowFilters} width="20%">
-            <SearchInput placeholder="Digite um parâmetro" width="100%" />
+            {condition == 'equals' ? (
+              <Autocomplete
+                title="Fruits"
+                onChange={changedItem => handleAutocomplete(changedItem)}
+                items={autocompleteItens}
+              >
+                {props => {
+                  const { getInputProps, getRef, inputValue } = props
+                  return (
+                    <TextInput
+                      {...getInputProps()}
+                      placeholder="Fruits"
+                      value={inputValue}
+                      ref={getRef}
+                    />
+                  )
+                }}
+              </Autocomplete>
+            ) : (
+              <TextInput
+                placeholder="Digite um parâmetro"
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setParameter(e.target.value)
+                }
+                value={parameter}
+              />
+            )}
           </Pane>
           <Pane {...paneRowFilters} width="7%">
-            <IconButton width="33%" height="3vh" icon={TickIcon} />
-            <IconButton
-              width="33%"
-              height="3vh"
-              icon={CleanIcon}
-              onClick={() => setCustomerId('')}
-            />
-            <IconButton width="33%" height="3vh" icon={FilterIcon} />
+            <Tooltip content="Limpar">
+              <IconButton
+                width="33%"
+                height="3vh"
+                icon={CleanIcon}
+                onClick={handleClear}
+              />
+            </Tooltip>
+            <Popover
+              content={
+                <Pane>
+                  <Table width={500} height={150}>
+                    <Table.Head height={25}>
+                      <TextHeaderCell>Campo</TextHeaderCell>
+                      <TextHeaderCell>Condição</TextHeaderCell>
+                      <TextHeaderCell>Filtro</TextHeaderCell>
+                      <TextHeaderCell></TextHeaderCell>
+                    </Table.Head>
+                    <VirtualBody height={125}>
+                      {useVehicles.map((vehicle, index) => (
+                        <Row key={index}>
+                          <TextCell></TextCell>
+                          <TextCell></TextCell>
+                          <TextCell>{vehicle.licensePlate}</TextCell>
+                          <TextCell>
+                            <IconButton
+                              icon={RemoveIcon}
+                              //! TODO
+                              onClick={() => useVehicles.splice(index, 1)}
+                              intent="danger"
+                              height={25}
+                              border="none"
+                            />
+                          </TextCell>
+                        </Row>
+                      ))}
+                    </VirtualBody>
+                  </Table>
+                </Pane>
+              }
+            >
+              <Tooltip content="Filtro">
+                <IconButton width="33%" height="3vh" icon={FilterIcon} />
+              </Tooltip>
+            </Popover>
           </Pane>
           <Pane {...paneRowFilters} width="15%">
             <Text paddingRight={6}>Atualização:</Text>
@@ -170,9 +333,15 @@ const Platform: NextPage = () => {
             />
           </Pane>
           <Pane {...paneRowFilters} width="7%">
-            <IconButton width="33%" height="3vh" icon={RefreshIcon} />
-            <IconButton width="33%" height="3vh" icon={ExportIcon} />
-            <IconButton width="33%" height="3vh" icon={MapIcon} />
+            <Tooltip content="Atualizar">
+              <IconButton width="33%" height="3vh" icon={RefreshIcon} />
+            </Tooltip>
+            <Tooltip content="Exportar">
+              <IconButton width="33%" height="3vh" icon={ExportIcon} />
+            </Tooltip>
+            <Tooltip content="Abrir no Mapa">
+              <IconButton width="33%" height="3vh" icon={MapIcon} />
+            </Tooltip>
           </Pane>
           <Pane {...paneRowFilters} width="12%">
             <Text paddingRight={6}>Registros:</Text>
@@ -198,54 +367,66 @@ const Platform: NextPage = () => {
         </Pane>
         <Table>
           <Table.Head height="3vh">
-            <Table.TextHeaderCell>Placa</Table.TextHeaderCell>
-            <Table.TextHeaderCell>Motorista</Table.TextHeaderCell>
-            <Table.TextHeaderCell>Última Atualização</Table.TextHeaderCell>
-            <Table.TextHeaderCell>Velocidade</Table.TextHeaderCell>
-            <Table.TextHeaderCell>Status</Table.TextHeaderCell>
+            <TextHeaderCell>Placa</TextHeaderCell>
+            <TextHeaderCell>Motorista</TextHeaderCell>
+            <TextHeaderCell>Última Atualização</TextHeaderCell>
+            <TextHeaderCell>Velocidade</TextHeaderCell>
+            <TextHeaderCell>Status</TextHeaderCell>
           </Table.Head>
-          <Table.VirtualBody height="20vh">
-            {customerId && vehicles
-              ? vehicles.map(vehicle => (
-                  <Table.Row key={vehicle.id} isSelectable>
-                    <Table.TextCell>{vehicle.licensePlate}</Table.TextCell>
-                    <Table.TextCell>{}</Table.TextCell>
-                    <Table.TextCell>
-                      {vehicle.device?.location[0]?.fixTime
-                        ? new Date(
-                            vehicle.device?.location[0]?.fixTime
-                          ).toLocaleDateString('pt-br', {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                            second: 'numeric',
-                            timeZoneName: 'short',
-                          })
-                        : ''}
-                    </Table.TextCell>
-                    <Table.TextCell>
-                      {vehicle.device?.location[0]?.speed}
-                    </Table.TextCell>
-                    <Table.TextCell>
-                      {vehicle.device?.status[0]?.ignition ? (
-                        <Icon
-                          icon={KeyIcon}
-                          color={
-                            vehicle.device?.status[0]?.ignition
-                              ? 'green'
-                              : 'gray'
-                          }
-                        />
-                      ) : (
-                        ''
-                      )}
-                    </Table.TextCell>
-                  </Table.Row>
-                ))
-              : ''}
-          </Table.VirtualBody>
+          <VirtualBody height="20vh">
+            {(customerId && useVehicles) || useVehicles ? (
+              useVehicles.map(vehicle => (
+                <Row
+                  key={vehicle.id}
+                  isSelectable
+                  onClick={() => toggleCenter(vehicle)}
+                >
+                  <TextCell>{vehicle.licensePlate}</TextCell>
+                  <TextCell>{}</TextCell>
+                  <TextCell>
+                    {vehicle.device?.location[0]?.fixTime
+                      ? new Date(
+                          vehicle.device?.location[0]?.fixTime
+                        ).toLocaleDateString('pt-br', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          second: 'numeric',
+                          timeZoneName: 'short',
+                        })
+                      : ''}
+                  </TextCell>
+                  <TextCell>{vehicle.device?.location[0]?.speed}</TextCell>
+                  <TextCell>
+                    {vehicle.device?.status[0]?.ignition ? (
+                      <Icon
+                        icon={KeyIcon}
+                        color={
+                          vehicle.device?.status[0]?.ignition ? 'green' : 'gray'
+                        }
+                      />
+                    ) : (
+                      ''
+                    )}
+                  </TextCell>
+                </Row>
+              ))
+            ) : (
+              <Pane
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                flexDirection="column"
+                height={70}
+                marginTop={20}
+                opacity={0.3}
+              >
+                <Empty />
+              </Pane>
+            )}
+          </VirtualBody>
         </Table>
       </Pane>
-    </Pane>
+    </PlatformContainer>
   )
 }
 

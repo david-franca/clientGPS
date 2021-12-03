@@ -1,14 +1,6 @@
-interface Itens {
-  name: string
-  select: string
-}
+import { ConfigMenu } from '../@types/menu'
 
-export const configMenu: [
-  {
-    name: string
-    itens: Itens[]
-  }
-] = [
+export const configMenu: ConfigMenu[] = [
   {
     name: 'Cadastro',
     itens: [
