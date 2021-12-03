@@ -1,3 +1,5 @@
+import 'antd/dist/antd.css'
+
 import { Fragment } from 'react'
 import { createGlobalStyle, ThemeProvider } from 'styled-components'
 

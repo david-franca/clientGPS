@@ -1,59 +1,105 @@
 import type { NextPage } from 'next'
-import styled from 'styled-components'
+import { Col, List, Menu, Row, Table } from 'antd'
 
-const Container = styled.div`
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: repeat(12, 1fr);
-  grid-column-gap: 0px;
-  grid-row-gap: 0px;
-`
-const Menu = styled.div`
-  grid-area: 1 / 1 / 2 / 13;
-  background: yellow;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`
-const Nav = styled.div`
-  grid-area: 2 / 1 / 9 / 4;
-  background: whitesmoke;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`
-const Map = styled.div`
-  grid-area: 2 / 4 / 9 / 13;
-  background: violet;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`
-const Table = styled.div`
-  grid-area: 9 / 1 / 13 / 13;
-  background: wheat;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`
+import { configMenu } from '../config'
+
+const { SubMenu } = Menu
+
+const columns = [
+  {
+    title: 'Placa',
+    dataIndex: 'placa',
+    key: 'placa',
+  },
+  {
+    title: 'Motorista',
+    dataIndex: 'age',
+    key: 'age',
+  },
+  {
+    title: 'Ultima Atualização',
+    dataIndex: 'address',
+    key: 'address',
+  },
+  {
+    title: 'Velocidade',
+    key: 'tags',
+    dataIndex: 'tags',
+  },
+  {
+    title: 'Status',
+    key: 'action',
+  },
+]
+
+const data = [
+  'David',
+  'Carlos',
+  'Sara',
+  'Alice',
+  'Ferreira',
+  'Juvenal',
+  'Rocha',
+  'Carneiro',
+  'Ravi',
+  'Augusta',
+]
+
 const Home: NextPage = () => {
+  const handleClick = (e: unknown) => {
+    console.log('click ', e)
+  }
+
   return (
-    <Container>
-      <Menu>
-        <select name="menu" id="menu">
-          <option value="">Selecione</option>
-        </select>
-        <select name="menu" id="menu">
-          <option value="">Selecione</option>
-        </select>
-        <select name="menu" id="menu">
-          <option value="">Selecione</option>
-        </select>
-      </Menu>
-      <Nav>Nav</Nav>
-      <Map>Map</Map>
-      <Table>Table</Table>
-    </Container>
+    // <Layout>
+    //   <Layout>
+    //     <Sider style={{ color: '#fff', height: '70vh', background: '#3ba0e9' }}>
+    //       Sider
+    //     </Sider>
+    //     <Content style={{ padding: '0 50px', background: '#3baa' }}>
+    //       <div className="site-layout-content">Mapa</div>
+    //     </Content>
+    //   </Layout>
+    //   <Table columns={columns} />
+    // </Layout>
+    <div>
+      <Row>
+        <Col span={24}>
+          <Menu mode="horizontal" onClick={handleClick}>
+            {configMenu.map((data, index) => {
+              const key = index + 1
+              return (
+                <SubMenu key={`menu_${key}`} title={data.name}>
+                  {data.itens
+                    ? data.itens.map((item, index) => (
+                        <Menu.Item key={index}>{item.name}</Menu.Item>
+                      ))
+                    : ''}
+                </SubMenu>
+              )
+            })}
+          </Menu>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={5}>
+          <List
+            size="small"
+            header={<div>Clientes</div>}
+            bordered
+            dataSource={data}
+            grid={{ column: 1 }}
+            renderItem={item => <List.Item>{item}</List.Item>}
+          />
+        </Col>
+        <Col span={19}>col-12</Col>
+      </Row>
+      <Row>
+        <Col span={24}>
+          <Table columns={columns} />
+        </Col>
+      </Row>
+    </div>
   )
 }
 
